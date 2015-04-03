@@ -1,0 +1,40 @@
+{
+  "name": "client-router",
+  "description": "Router",
+  "homepage": "https://github.com/kevbook/client-router",
+  "keywords": [
+    "router",
+    "route",
+    "routing",
+    "client-router",
+    "web router"
+  ],
+  "author": "Karan Sakhuja <kevin.sakhuja@gmail.com> (http://kevify.com)",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kevbook/client-router.git"
+  },
+  "license": "GNU",
+  "bugs": {
+    "url": "https://github.com/kevbook/client-router/issues"
+  },
+  "dependencies": {
+    "async": "latest"
+  },
+  "devDependencies": {
+    "babel-core": "latest",
+    "babel-loader": "latest",
+    "error-parser": "latest",
+    "gulp": "latest",
+    "gulp-autopolyfiller": "latest",
+    "gulp-uglify": "latest",
+    "merge": "latest",
+    "strip-loader": "latest",
+    "webpack": "latest",
+    "yargs": "latest"
+  }
+}

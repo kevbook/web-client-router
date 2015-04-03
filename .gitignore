@@ -1,0 +1,35 @@
+# osx noise
+.DS_Store
+# xcode noise
+build/*
+*.mode1
+*.mode1v3
+*.mode2v3
+*.perspective
+*.perspectivev3
+*.pbxuser
+*.xcworkspace
+xcuserdata
+
+# svn & cvs
+.svn
+CVS
+
+npm-debug.log
+lib-cov
+*.seed
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.gz
+*.project
+config.rb
+node_modules/*
+.sass-cache/*
+public/html/*
+!public/html/read
+*.scssc
+*.sassc
+*.codekit
