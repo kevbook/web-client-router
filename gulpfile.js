@@ -5,6 +5,7 @@ var gulp = require('gulp'),
   webpack = require('webpack'),
   merge = require('merge').recursive,
   errorParser = require('error-parser'),
+  jsValidate = require('gulp-jsvalidate'),
 
   // Js Polyfiller
   jsAutopolyfiller = require('gulp-autopolyfiller'),
@@ -19,12 +20,12 @@ var argv = require('yargs')
   .argv;
 
 
-// Default compiler
+// Default
 gulp.task('default', ['js']);
 
 // Watcher
 gulp.task('watch', function() {
-  gulp.watch(['**/*.js'], ['js']);
+  gulp.watch(['**/*.js'], ['js-validate']);
 });
 
 
@@ -40,6 +41,14 @@ gulp.task('js-polyfill', function() {
 });
 
 
+// Validate JS syntax
+gulp.task('js-validate', ['js'], function () {
+  return gulp.src(['./**/*.js', '!./node_modules/**'])
+    .pipe(jsValidate());
+});
+
+
+// JS Compiler
 var config = require('./webpack.config.js').config;
 var prodConfig = require('./webpack.config.js').prodConfig;
 

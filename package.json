@@ -1,6 +1,6 @@
 {
   "name": "client-router",
-  "description": "Router",
+  "description": "Express style client router for single page web apps",
   "homepage": "https://github.com/kevbook/client-router",
   "keywords": [
     "router",
@@ -23,7 +23,10 @@
     "url": "https://github.com/kevbook/client-router/issues"
   },
   "dependencies": {
-    "async": "latest"
+    "object-assign": "^2.0.0",
+    "path-to-regexp": "^1.0.3",
+    "query-string": "^1.0.0",
+    "isarray": "0.0.1"
   },
   "devDependencies": {
     "babel-core": "latest",
@@ -34,6 +37,7 @@
     "gulp-uglify": "latest",
     "merge": "latest",
     "strip-loader": "latest",
+    "gulp-jsvalidate": "^2.0.0",
     "webpack": "latest",
     "yargs": "latest"
   }
