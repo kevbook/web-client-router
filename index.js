@@ -1,16 +1,20 @@
 
 var pathToRegexp = require('path-to-regexp'),
-  // qs = require('query-string'),
-  // objectAssign = require('object-assign'),
-  isArray = require('isarray');
+  isArray = require('isarray'),
+  Emitter = require('tiny-emitter'),
+  flow = require('kevbook.flow'),
+  utils = require('./lib/utils');
+
 
 module.exports = Router;
 
-
 // Global Vars
 var routerStarted = false;
+var events = new Emitter();
+var routes = [];
 
-function Router(routes, opts) {
+
+function Router(Routes, opts) {
 
   if (typeof window === 'undefined')
     throw new Error('This module can only be used in a web browser.');
@@ -24,25 +28,29 @@ function Router(routes, opts) {
 
   // Init things
   opts = opts || {};
-  routerStarted = true;
-  this.routes = [];
-
-  // Set pointers
-  this.location = window.location;
-  this.history = window.history;
+  this.events = events;
 
   // Add routes
-  if (isArray(routes)) {
+  if (isArray(Routes)) {
 
-    for (var i=0, len=routes.length; i<len; i++)
-      this.addRoute(routes[i]);
+    for (var i=0, len=Routes.length; i<len; i++)
+      this.addRoute(Routes[i]);
   }
+
+  // Init the window listener
+  window.addEventListener('popstate', this.onPopstate.bind(this), false);
 
   // If the server has already rendered the page,
   // and you don't want the initial route to be triggered
-  // if (opts.silent !== true) this.initRoute();
-};
+  if (opts.silent !== true) {
 
+    // Emulating nextTick on the browser
+    var that = this;
+    setTimeout(function() {
+      that.go(window.location.pathname || '');
+    }, 0);
+  }
+};
 
 Router.prototype.addRoute = function(route) {
 
@@ -56,18 +64,15 @@ Router.prototype.addRoute = function(route) {
   for (var i=0, len=keys.length; i<len; i++)
     params.push([keys[i].name]);
 
-  return this.routes.push({
+  return routes.push({
     re: pathToRegexp(route.path),
     params: params,
     handler: route.handler,
+    middleware: typeof route.middleware === 'function'
+                  ? [route.middleware]
+                  : route.middleware,
     title: route.title || null
   });
-};
-
-Router.prototype.getFragment = function() {
-
-  var fragment = this.location.pathname || '';
-  return this.cleanFragment(fragment);
 };
 
 Router.prototype.cleanFragment = function(fragment) {
@@ -88,14 +93,6 @@ Router.prototype.cleanFragment = function(fragment) {
   return '/'+fragment;
 };
 
-Router.prototype.getQuerystring = function() {
-  return qs.parse(this.location.search || '');
-};
-
-Router.prototype.updateTitle = function(title) {
-  document.title = title;
-};
-
 Router.prototype.matchPath = function(url, route) {
 
   var m = route.re.exec(url);
@@ -107,7 +104,31 @@ Router.prototype.matchPath = function(url, route) {
     params[route.params[i]] = m[i+1];
   }
 
-  return { params: params };
+  return { params: params, url: url };
+};
+
+Router.prototype.middleware = function(fns, cb) {
+  return flow.series(fns, cb);
+};
+
+Router.prototype.onPopstate = function(e) {
+  routerStarted = false;
+  this.go(window.location.pathname || '');
+};
+
+Router.prototype.gotoRoute = function(url, route, data, opts) {
+
+  if (route.title) utils.updateTitle(route.title);
+
+  if (routerStarted) {
+    window.history[opts.replace
+      ? 'replaceState'
+      : 'pushState']({}, document.title, url);
+  }
+
+  routerStarted = true;
+  events.emit('route_complete', url);
+  route.handler(data);
 };
 
 Router.prototype.go = function(url, opts) {
@@ -115,25 +136,35 @@ Router.prototype.go = function(url, opts) {
   opts = opts || {};
   url = this.cleanFragment(url);
 
-  for (var ret, i=0, len=this.routes.length; i<len; i++) {
+  for (var ret, i=0, len=routes.length; i<len; i++) {
 
-    ret = this.matchPath(url, this.routes[i]);
+    ret = this.matchPath(url, routes[i]);
 
     if (ret) {
 
-      if (this.routes[i].title) this.updateTitle(this.routes[i].title);
-      this.routes[i].handler(ret);
+      events.emit('route_matched', url);
 
-      // this.history[opts.replace
-      //   ? 'replaceState'
-      //   : 'pushState']({}, document.title, url);
+      if (routes[i].middleware) {
+
+        this.middleware(routes[i].middleware, function(err) {
+          if (err) events.emit('route_error', url);
+          else this.gotoRoute(url, routes[i], ret, opts);
+        });
+      }
+
+      else this.gotoRoute(url, routes[i], ret, opts);
       break;
     }
   }
 
-  // // Force a path
+  if (!ret) {
+    events.emit('route_not_found', url);
+    throw new Error('Route not found.');
+  }
+
+  // Force a path
   // if (opts.force) {
-  //   this.history[opts.replace ? 'replaceState' : 'pushState']({}, document.title, url);
+  //   window.history[opts.replace ? 'replaceState' : 'pushState']({}, document.title, url);
   // }
   //   return this.location.assign(url);
   // }
@@ -141,27 +172,3 @@ Router.prototype.go = function(url, opts) {
   // if (current === path && opts.force === false)
   //   return false;
 };
-
-var R = new Router([
-  { path: '/abc', handler: function(r){ console.log(r) } },
-  { path: '/abc/super', handler: function(r){ console.log(r) } },
-  { path: '/abc/:kev/:kev2', handler: function(r){ console.log(r) } }
-]);
-
-window.R = R;
-
-/*********
-
-    // match, returns `true`. If no defined routes matches the fragment,
-    // returns `false`.
-    loadUrl: function(fragment) {
-      fragment = this.fragment = this.getFragment(fragment);
-      return _.any(this.handlers, function(handler) {
-        if (handler.route.test(fragment)) {
-          handler.callback(fragment);
-          return true;
-        }
-      });
-    },
-
-**********/

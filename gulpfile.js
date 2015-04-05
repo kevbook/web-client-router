@@ -7,6 +7,9 @@ var gulp = require('gulp'),
   errorParser = require('error-parser'),
   jsValidate = require('gulp-jsvalidate'),
 
+  // Test Webserver
+  webserver = require('gulp-webserver'),
+
   // Js Polyfiller
   jsAutopolyfiller = require('gulp-autopolyfiller'),
   uglify = require('gulp-uglify');
@@ -24,8 +27,19 @@ var argv = require('yargs')
 gulp.task('default', ['js']);
 
 // Watcher
-gulp.task('watch', function() {
+gulp.task('watch', ['webserver'], function() {
   gulp.watch(['**/*.js'], ['js-validate']);
+});
+
+
+// Webserver
+gulp.task('webserver', function() {
+
+  return gulp.src('./dist')
+    .pipe(webserver({
+      open: true,
+      port: 5000
+    }));
 });
 
 

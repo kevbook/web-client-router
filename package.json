@@ -11,9 +11,6 @@
   ],
   "author": "Karan Sakhuja <kevin.sakhuja@gmail.com> (http://kevify.com)",
   "main": "index.js",
-  "scripts": {
-    "test": "mocha test/tests.js"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/kevbook/client-router.git"
@@ -23,10 +20,11 @@
     "url": "https://github.com/kevbook/client-router/issues"
   },
   "dependencies": {
-    "object-assign": "^2.0.0",
+    "isarray": "0.0.1",
     "path-to-regexp": "^1.0.3",
     "query-string": "^1.0.0",
-    "isarray": "0.0.1"
+    "tiny-emitter": "^1.0.0",
+    "kevbook.flow": "latest"
   },
   "devDependencies": {
     "babel-core": "latest",
@@ -34,10 +32,11 @@
     "error-parser": "latest",
     "gulp": "latest",
     "gulp-autopolyfiller": "latest",
+    "gulp-jsvalidate": "^2.0.0",
     "gulp-uglify": "latest",
+    "gulp-webserver": "^0.9.0",
     "merge": "latest",
     "strip-loader": "latest",
-    "gulp-jsvalidate": "^2.0.0",
     "webpack": "latest",
     "yargs": "latest"
   }

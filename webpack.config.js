@@ -13,7 +13,8 @@ exports.config = {
   // We are watching in the gulp.watch
   watch: false,
   entry: {
-    index: './index'
+    router: ['./index'],
+    tests: './test/tests'
   },
   output: {
     path: 'dist',
@@ -23,8 +24,11 @@ exports.config = {
     noParse: /\.min\.js/
   },
   plugins: [
+    new webpack.optimize.DedupePlugin(),
+    new webpack.optimize.OccurenceOrderPlugin()
   ],
   resolve: {
+    // root: __dirname,
     extensions: ['', '.js', '.jsx'],
     modulesDirectories: ['bower_components', 'node_modules']
   },
@@ -53,8 +57,6 @@ exports.prodConfig = {
   },
   plugins: [
     new webpack.IgnorePlugin(/debug/),
-    new webpack.optimize.DedupePlugin(),
-    new webpack.optimize.OccurenceOrderPlugin(),
     new webpack.optimize.AggressiveMergingPlugin(),
     // Prod build settings
     new webpack.DefinePlugin({
