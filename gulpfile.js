@@ -70,6 +70,7 @@ gulp.task('js', function(cb) {
 
   // Add prod optimizations
   if (argv.prod === true) {
+    console.log('Using prod config');
     config = merge(true, config, prodConfig);
   }
 

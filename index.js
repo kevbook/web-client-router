@@ -1,9 +1,9 @@
 
 var pathToRegexp = require('path-to-regexp'),
   isArray = require('isarray'),
-  Emitter = require('tiny-emitter'),
-  flow = require('kevbook.flow'),
-  utils = require('./lib/utils');
+  utils = require('./lib/utils'),
+  Emitter = require('tiny-emitter');
+
 
 
 module.exports = Router;
@@ -27,8 +27,10 @@ function Router(Routes, opts) {
 
 
   // Init things
-  opts = opts || {};
+  this.opts = opts || {};
   this.events = events;
+  var that = this;
+
 
   // Add routes
   if (isArray(Routes)) {
@@ -40,17 +42,19 @@ function Router(Routes, opts) {
   // Init the window listener
   window.addEventListener('popstate', this.onPopstate.bind(this), false);
 
-  // If the server has already rendered the page,
-  // and you don't want the initial route to be triggered
-  if (opts.silent !== true) {
 
-    // Emulating nextTick on the browser
-    var that = this;
-    setTimeout(function() {
-      that.go(window.location.pathname || '');
-    }, 0);
-  }
+  // Emulating nextTick on the browser
+  setTimeout(function() {
+
+    // If the server has already rendered the page,
+    // and you don't want the initial route to be triggered
+    (opts.silent !== true)
+      ? that.go(window.location.pathname || '')
+      : that.gotoRoute(window.location.pathname || '');
+
+  }, 0);
 };
+
 
 Router.prototype.addRoute = function(route) {
 
@@ -68,12 +72,18 @@ Router.prototype.addRoute = function(route) {
     re: pathToRegexp(route.path),
     params: params,
     handler: route.handler,
-    middleware: typeof route.middleware === 'function'
-                  ? [route.middleware]
-                  : route.middleware,
-    title: route.title || null
+    title: route.title || null,
+
+    pre: typeof route.pre === 'function'
+      ? [route.pre]
+      : isArray(route.pre) ? route.pre : null,
+
+    get: typeof route.get === 'string'
+      ? [ route.get ]
+      : isArray(route.get) ? route.get : null,
   });
 };
+
 
 Router.prototype.cleanFragment = function(fragment) {
 
@@ -93,6 +103,7 @@ Router.prototype.cleanFragment = function(fragment) {
   return '/'+fragment;
 };
 
+
 Router.prototype.matchPath = function(url, route) {
 
   var m = route.re.exec(url);
@@ -107,18 +118,16 @@ Router.prototype.matchPath = function(url, route) {
   return { params: params, url: url };
 };
 
-Router.prototype.middleware = function(fns, cb) {
-  return flow.series(fns, cb);
-};
 
 Router.prototype.onPopstate = function(e) {
   routerStarted = false;
   this.go(window.location.pathname || '');
 };
 
+
 Router.prototype.gotoRoute = function(url, route, data, opts) {
 
-  if (route.title) utils.updateTitle(route.title);
+  if (route && route.title) utils.updateTitle(route.title);
 
   if (routerStarted) {
     window.history[opts.replace
@@ -128,13 +137,16 @@ Router.prototype.gotoRoute = function(url, route, data, opts) {
 
   routerStarted = true;
   events.emit('route_complete', url);
-  route.handler(data);
+  if (route && route.handler) route.handler(data);
 };
+
 
 Router.prototype.go = function(url, opts) {
 
   opts = opts || {};
   url = this.cleanFragment(url);
+  var that = this;
+
 
   for (var ret, i=0, len=routes.length; i<len; i++) {
 
@@ -144,15 +156,42 @@ Router.prototype.go = function(url, opts) {
 
       events.emit('route_matched', url);
 
-      if (routes[i].middleware) {
+      var processRoute = function() {
+        // Get request
+        if (routes[i].get) {
+          utils.get(that.opts.xhr, ret, routes[i].get,
+            function(err, get) {
+              if (err) {
+                events.emit('route_error', err);
+              }
+              else {
+                ret.get = get;
+                that.gotoRoute(url, routes[i], ret, opts);
+              }
+          });
+        }
 
-        this.middleware(routes[i].middleware, function(err) {
-          if (err) events.emit('route_error', url);
-          else this.gotoRoute(url, routes[i], ret, opts);
+        else {
+          that.gotoRoute(url, routes[i], ret, opts);
+        }
+      };
+
+
+      if (routes[i].pre) {
+
+        utils.pre(ret, routes[i].pre, function(err, pre) {
+          if (err) {
+            events.emit('route_error', err);
+          }
+          else {
+            ret.pre = pre;
+            processRoute();
+          }
         });
       }
 
-      else this.gotoRoute(url, routes[i], ret, opts);
+      else processRoute();
+
       break;
     }
   }

@@ -74,7 +74,6 @@
 	var pathToRegexp = __webpack_require__(5),
 	  isArray = __webpack_require__(3),
 	  Emitter = __webpack_require__(7),
-	  flow = __webpack_require__(4),
 	  utils = __webpack_require__(2);
 
 
@@ -140,10 +139,15 @@
 	    re: pathToRegexp(route.path),
 	    params: params,
 	    handler: route.handler,
+	    title: route.title || null,
+
 	    middleware: typeof route.middleware === 'function'
-	                  ? [route.middleware]
-	                  : route.middleware,
-	    title: route.title || null
+	      ? [route.middleware]
+	      : isArray(route.middleware) ? route.middleware : null,
+
+	    get: typeof route.get === 'string'
+	      ? [route.get]
+	      : isArray(route.get) ? route.get : null,
 	  });
 	};
 
@@ -179,10 +183,6 @@
 	  return { params: params, url: url };
 	};
 
-	Router.prototype.middleware = function(fns, cb) {
-	  return flow.series(fns, cb);
-	};
-
 	Router.prototype.onPopstate = function(e) {
 	  routerStarted = false;
 	  this.go(window.location.pathname || '');
@@ -207,6 +207,8 @@
 
 	  opts = opts || {};
 	  url = this.cleanFragment(url);
+	  var self = this;
+
 
 	  for (var ret, i=0, len=routes.length; i<len; i++) {
 
@@ -216,15 +218,41 @@
 
 	      events.emit('route_matched', url);
 
+	      var process = function() {
+	        // Get request
+	        if (routes[i].get) {
+	          utils.get(ret, routes[i].get, function(err, data) {
+	            if (err) {
+	              events.emit('route_error', err);
+	            }
+	            else {
+	              ret.data = data;
+	              self.gotoRoute(url, routes[i], ret, opts);
+	            }
+	          });
+	        }
+
+	        else {
+	          self.gotoRoute(url, routes[i], ret, opts);
+	        }
+	      };
+
+
 	      if (routes[i].middleware) {
 
-	        this.middleware(routes[i].middleware, function(err) {
-	          if (err) events.emit('route_error', url);
-	          else this.gotoRoute(url, routes[i], ret, opts);
+	        utils.middleware(ret, routes[i].middleware, function(err, data) {
+	          if (err) {
+	            events.emit('route_error', err);
+	          }
+	          else {
+	            ret.data = data;
+	            process();
+	          }
 	        });
 	      }
 
-	      else this.gotoRoute(url, routes[i], ret, opts);
+	      else process();
+
 	      break;
 	    }
 	  }
@@ -251,16 +279,25 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	// var xhr = require('xhr'),
 	// qs = require('query-string'),
 	// isArray = require('isarray');
-
+	var flow = __webpack_require__(4);
 	module.exports = Utils;
 
 	function Utils(){}
 
 	Utils.updateTitle = function(title) {
 	  document.title = title;
+	};
+
+	Utils.middleware = function(ret, fns, cb) {
+	  return flow.seriesMap(fns, function(fn, next) {
+	    fn(ret, next);
+	  }, cb);
+	};
+
+	Utils.get = function(ret, fns, cb) {
+
 	};
 
 	// Utils.getQuerystring = function() {
