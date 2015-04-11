@@ -5,7 +5,6 @@ var pathToRegexp = require('path-to-regexp'),
   Emitter = require('tiny-emitter');
 
 
-
 module.exports = Router;
 
 // Global Vars
@@ -29,6 +28,7 @@ function Router(Routes, opts) {
   // Init things
   this.opts = opts || {};
   this.events = events;
+  this.lastFragment = null;
   var that = this;
 
 
@@ -67,6 +67,7 @@ Router.prototype.addRoute = function(route) {
 
   for (var i=0, len=keys.length; i<len; i++)
     params.push([keys[i].name]);
+
 
   return routes.push({
     re: pathToRegexp(route.path),
@@ -109,11 +110,9 @@ Router.prototype.matchPath = function(url, route) {
   var m = route.re.exec(url);
   if (!m) return false;
 
-
-  var params = {};
-  for (var i=0, len=m.length-1; i<len; i++) {
-    params[route.params[i]] = m[i+1];
-  }
+  for (var params = {}, i = 0, len = m.length-1;
+       i<len, params[route.params[i]] = m[i+1];
+       i++);
 
   return { params: params, url: url };
 };
@@ -136,6 +135,9 @@ Router.prototype.gotoRoute = function(url, route, data, opts) {
   }
 
   routerStarted = true;
+  data.lastUrl = this.lastFragment;
+  this.lastFragment = url;
+
   events.emit('route_complete', url);
   if (route && route.handler) route.handler(data);
 };

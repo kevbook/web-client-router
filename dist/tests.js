@@ -165,7 +165,6 @@
 	  Emitter = __webpack_require__(7);
 
 
-
 	module.exports = Router;
 
 	// Global Vars
@@ -189,6 +188,7 @@
 	  // Init things
 	  this.opts = opts || {};
 	  this.events = events;
+	  this.lastFragment = null;
 	  var that = this;
 
 
@@ -227,6 +227,7 @@
 
 	  for (var i=0, len=keys.length; i<len; i++)
 	    params.push([keys[i].name]);
+
 
 	  return routes.push({
 	    re: pathToRegexp(route.path),
@@ -269,11 +270,9 @@
 	  var m = route.re.exec(url);
 	  if (!m) return false;
 
-
-	  var params = {};
-	  for (var i=0, len=m.length-1; i<len; i++) {
-	    params[route.params[i]] = m[i+1];
-	  }
+	  for (var params = {}, i = 0, len = m.length-1;
+	       i<len, params[route.params[i]] = m[i+1];
+	       i++);
 
 	  return { params: params, url: url };
 	};
@@ -296,6 +295,9 @@
 	  }
 
 	  routerStarted = true;
+	  data.lastUrl = this.lastFragment;
+	  this.lastFragment = url;
+
 	  events.emit('route_complete', url);
 	  if (route && route.handler) route.handler(data);
 	};
@@ -380,7 +382,6 @@
 	
 	//,
 	var flow = __webpack_require__(4),
-	  // qs = require('query-string'),
 	  xhr = __webpack_require__(8);
 
 
@@ -405,13 +406,11 @@
 
 	  var that = this;
 
-	  return flow.seriesMap(fns, function(url, next) {
+	  return flow.parallelMap(fns, function(url, next) {
 
 	    var opts = JSON.parse(JSON.stringify(xhrOpts));
 	    opts.url = that.teml(url, ret.params);
-	    // window.x = url;
 	    console.log('GET %s', opts.url);
-	    // console.log(ret.params)
 
 	    xhr(opts, function(err, res) {
 
@@ -434,14 +433,15 @@
 	 * var hello = teml("Hello, {name}!", {name: 'k' })
 	 */
 	Utils.teml = function (s, v) {
-	  return s.replace(/\{([^}]+)\}/g, function (f, k) {
-	    return v.hasOwnProperty(k) ? v[k] : f;
+	  return s.replace(/\{([^}]+)\}/g, function(f, k) {
+	    return v[k] ? v[k] : f;
 	  });
 	};
 
-	// Utils.getQuerystring = function() {
-	//   return qs.parse(window.location.search || '');
-	// };
+
+	Utils.getQuerystring = function() {
+	  var qs = window.location.search;
+	};
 
 
 /***/ },

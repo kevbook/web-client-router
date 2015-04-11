@@ -43,19 +43,21 @@
 /******/ ((function(modules) {
 	// Check all modules for deduplicated modules
 	for(var i in modules) {
-		switch(typeof modules[i]) {
-		case "number":
-			// Module is a copy of another module
-			modules[i] = modules[modules[i]];
-			break;
-		case "object":
-			// Module can be created from a template
-			modules[i] = (function(_m) {
-				var args = _m.slice(1), fn = modules[_m[0]];
-				return function (a,b,c) {
-					fn.apply(null, [a,b,c].concat(args));
-				};
-			}(modules[i]));
+		if(Object.prototype.hasOwnProperty.call(modules, i)) {
+			switch(typeof modules[i]) {
+			case "number":
+				// Module is a copy of another module
+				modules[i] = modules[modules[i]];
+				break;
+			case "object":
+				// Module can be created from a template
+				modules[i] = (function(_m) {
+					var args = _m.slice(1), fn = modules[_m[0]];
+					return function (a,b,c) {
+						fn.apply(null, [a,b,c].concat(args));
+					};
+				}(modules[i]));
+			}
 		}
 	}
 	return modules;
@@ -73,8 +75,8 @@
 	
 	var pathToRegexp = __webpack_require__(5),
 	  isArray = __webpack_require__(3),
-	  Emitter = __webpack_require__(7),
-	  utils = __webpack_require__(2);
+	  utils = __webpack_require__(2),
+	  Emitter = __webpack_require__(7);
 
 
 	module.exports = Router;
@@ -98,8 +100,11 @@
 
 
 	  // Init things
-	  opts = opts || {};
+	  this.opts = opts || {};
 	  this.events = events;
+	  this.lastFragment = null;
+	  var that = this;
+
 
 	  // Add routes
 	  if (isArray(Routes)) {
@@ -111,17 +116,19 @@
 	  // Init the window listener
 	  window.addEventListener('popstate', this.onPopstate.bind(this), false);
 
-	  // If the server has already rendered the page,
-	  // and you don't want the initial route to be triggered
-	  if (opts.silent !== true) {
 
-	    // Emulating nextTick on the browser
-	    var that = this;
-	    setTimeout(function() {
-	      that.go(window.location.pathname || '');
-	    }, 0);
-	  }
+	  // Emulating nextTick on the browser
+	  setTimeout(function() {
+
+	    // If the server has already rendered the page,
+	    // and you don't want the initial route to be triggered
+	    (opts.silent !== true)
+	      ? that.go(window.location.pathname || '')
+	      : that.gotoRoute(window.location.pathname || '');
+
+	  }, 0);
 	};
+
 
 	Router.prototype.addRoute = function(route) {
 
@@ -135,21 +142,23 @@
 	  for (var i=0, len=keys.length; i<len; i++)
 	    params.push([keys[i].name]);
 
+
 	  return routes.push({
 	    re: pathToRegexp(route.path),
 	    params: params,
 	    handler: route.handler,
 	    title: route.title || null,
 
-	    middleware: typeof route.middleware === 'function'
-	      ? [route.middleware]
-	      : isArray(route.middleware) ? route.middleware : null,
+	    pre: typeof route.pre === 'function'
+	      ? [route.pre]
+	      : isArray(route.pre) ? route.pre : null,
 
 	    get: typeof route.get === 'string'
-	      ? [route.get]
+	      ? [ route.get ]
 	      : isArray(route.get) ? route.get : null,
 	  });
 	};
+
 
 	Router.prototype.cleanFragment = function(fragment) {
 
@@ -169,28 +178,29 @@
 	  return '/'+fragment;
 	};
 
+
 	Router.prototype.matchPath = function(url, route) {
 
 	  var m = route.re.exec(url);
 	  if (!m) return false;
 
-
-	  var params = {};
-	  for (var i=0, len=m.length-1; i<len; i++) {
-	    params[route.params[i]] = m[i+1];
-	  }
+	  for (var params = {}, i = 0, len = m.length-1;
+	       i<len, params[route.params[i]] = m[i+1];
+	       i++);
 
 	  return { params: params, url: url };
 	};
+
 
 	Router.prototype.onPopstate = function(e) {
 	  routerStarted = false;
 	  this.go(window.location.pathname || '');
 	};
 
+
 	Router.prototype.gotoRoute = function(url, route, data, opts) {
 
-	  if (route.title) utils.updateTitle(route.title);
+	  if (route && route.title) utils.updateTitle(route.title);
 
 	  if (routerStarted) {
 	    window.history[opts.replace
@@ -199,15 +209,19 @@
 	  }
 
 	  routerStarted = true;
+	  data.lastUrl = this.lastFragment;
+	  this.lastFragment = url;
+
 	  events.emit('route_complete', url);
-	  route.handler(data);
+	  if (route && route.handler) route.handler(data);
 	};
+
 
 	Router.prototype.go = function(url, opts) {
 
 	  opts = opts || {};
 	  url = this.cleanFragment(url);
-	  var self = this;
+	  var that = this;
 
 
 	  for (var ret, i=0, len=routes.length; i<len; i++) {
@@ -218,40 +232,41 @@
 
 	      events.emit('route_matched', url);
 
-	      var process = function() {
+	      var processRoute = function() {
 	        // Get request
 	        if (routes[i].get) {
-	          utils.get(ret, routes[i].get, function(err, data) {
-	            if (err) {
-	              events.emit('route_error', err);
-	            }
-	            else {
-	              ret.data = data;
-	              self.gotoRoute(url, routes[i], ret, opts);
-	            }
+	          utils.get(that.opts.xhr, ret, routes[i].get,
+	            function(err, get) {
+	              if (err) {
+	                events.emit('route_error', err);
+	              }
+	              else {
+	                ret.get = get;
+	                that.gotoRoute(url, routes[i], ret, opts);
+	              }
 	          });
 	        }
 
 	        else {
-	          self.gotoRoute(url, routes[i], ret, opts);
+	          that.gotoRoute(url, routes[i], ret, opts);
 	        }
 	      };
 
 
-	      if (routes[i].middleware) {
+	      if (routes[i].pre) {
 
-	        utils.middleware(ret, routes[i].middleware, function(err, data) {
+	        utils.pre(ret, routes[i].pre, function(err, pre) {
 	          if (err) {
 	            events.emit('route_error', err);
 	          }
 	          else {
-	            ret.data = data;
-	            process();
+	            ret.pre = pre;
+	            processRoute();
 	          }
 	        });
 	      }
 
-	      else process();
+	      else processRoute();
 
 	      break;
 	    }
@@ -279,30 +294,68 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	// qs = require('query-string'),
-	// isArray = require('isarray');
-	var flow = __webpack_require__(4);
+	//,
+	var flow = __webpack_require__(4),
+	  xhr = __webpack_require__(8);
+
+
 	module.exports = Utils;
 
-	function Utils(){}
+	function Utils(){};
 
 	Utils.updateTitle = function(title) {
 	  document.title = title;
 	};
 
-	Utils.middleware = function(ret, fns, cb) {
+
+	Utils.pre = function(ret, fns, cb) {
+
 	  return flow.seriesMap(fns, function(fn, next) {
-	    fn(ret, next);
+	    return fn(ret, next);
 	  }, cb);
 	};
 
-	Utils.get = function(ret, fns, cb) {
 
+	Utils.get = function(xhrOpts, ret, fns, cb) {
+
+	  var that = this;
+
+	  return flow.parallelMap(fns, function(url, next) {
+
+	    var opts = JSON.parse(JSON.stringify(xhrOpts));
+	    opts.url = that.teml(url, ret.params);
+	    console.log('GET %s', opts.url);
+
+	    xhr(opts, function(err, res) {
+
+	      res = res || {};
+	      try { res.body = JSON.parse(res.body) }
+	      catch(e) { res.body = res.body }
+
+	      return next(err, {
+	        statusCode: res.statusCode,
+	        data: res.body
+	      });
+
+	    });
+	  }, cb);
 	};
 
-	// Utils.getQuerystring = function() {
-	//   return qs.parse(window.location.search || '');
-	// };
+
+	/*
+	 * Usage: http://www.140byt.es/keywords/string
+	 * var hello = teml("Hello, {name}!", {name: 'k' })
+	 */
+	Utils.teml = function (s, v) {
+	  return s.replace(/\{([^}]+)\}/g, function(f, k) {
+	    return v[k] ? v[k] : f;
+	  });
+	};
+
+
+	Utils.getQuerystring = function() {
+	  var qs = window.location.search;
+	};
 
 
 /***/ },
@@ -787,6 +840,352 @@
 
 	module.exports = E;
 
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	var window = __webpack_require__(9)
+	var once = __webpack_require__(10)
+	var parseHeaders = __webpack_require__(14)
+
+
+	var XHR = window.XMLHttpRequest || noop
+	var XDR = "withCredentials" in (new XHR()) ? XHR : window.XDomainRequest
+
+	module.exports = createXHR
+
+	function createXHR(options, callback) {
+	    function readystatechange() {
+	        if (xhr.readyState === 4) {
+	            loadFunc()
+	        }
+	    }
+
+	    function getBody() {
+	        // Chrome with requestType=blob throws errors arround when even testing access to responseText
+	        var body = undefined
+
+	        if (xhr.response) {
+	            body = xhr.response
+	        } else if (xhr.responseType === "text" || !xhr.responseType) {
+	            body = xhr.responseText || xhr.responseXML
+	        }
+
+	        if (isJson) {
+	            try {
+	                body = JSON.parse(body)
+	            } catch (e) {}
+	        }
+
+	        return body
+	    }
+	    
+	    var failureResponse = {
+	                body: undefined,
+	                headers: {},
+	                statusCode: 0,
+	                method: method,
+	                url: uri,
+	                rawRequest: xhr
+	            }
+	    
+	    function errorFunc(evt) {
+	        clearTimeout(timeoutTimer)
+	        if(!(evt instanceof Error)){
+	            evt = new Error("" + (evt || "unknown") )
+	        }
+	        evt.statusCode = 0
+	        callback(evt, failureResponse)
+	    }
+
+	    // will load the data & process the response in a special response object
+	    function loadFunc() {
+	        clearTimeout(timeoutTimer)
+	        
+	        var status = (xhr.status === 1223 ? 204 : xhr.status)
+	        var response = failureResponse
+	        var err = null
+	        
+	        if (status !== 0){
+	            response = {
+	                body: getBody(),
+	                statusCode: status,
+	                method: method,
+	                headers: {},
+	                url: uri,
+	                rawRequest: xhr
+	            }
+	            if(xhr.getAllResponseHeaders){ //remember xhr can in fact be XDR for CORS in IE
+	                response.headers = parseHeaders(xhr.getAllResponseHeaders())
+	            }
+	        } else {
+	            err = new Error("Internal XMLHttpRequest Error")
+	        }
+	        callback(err, response, response.body)
+	        
+	    }
+	    
+	    if (typeof options === "string") {
+	        options = { uri: options }
+	    }
+
+	    options = options || {}
+	    if(typeof callback === "undefined"){
+	        throw new Error("callback argument missing")
+	    }
+	    callback = once(callback)
+
+	    var xhr = options.xhr || null
+
+	    if (!xhr) {
+	        if (options.cors || options.useXDR) {
+	            xhr = new XDR()
+	        }else{
+	            xhr = new XHR()
+	        }
+	    }
+
+	    var key
+	    var uri = xhr.url = options.uri || options.url
+	    var method = xhr.method = options.method || "GET"
+	    var body = options.body || options.data
+	    var headers = xhr.headers = options.headers || {}
+	    var sync = !!options.sync
+	    var isJson = false
+	    var timeoutTimer
+
+	    if ("json" in options) {
+	        isJson = true
+	        headers["Accept"] || (headers["Accept"] = "application/json") //Don't override existing accept header declared by user
+	        if (method !== "GET" && method !== "HEAD") {
+	            headers["Content-Type"] = "application/json"
+	            body = JSON.stringify(options.json)
+	        }
+	    }
+
+	    xhr.onreadystatechange = readystatechange
+	    xhr.onload = loadFunc
+	    xhr.onerror = errorFunc
+	    // IE9 must have onprogress be set to a unique function.
+	    xhr.onprogress = function () {
+	        // IE must die
+	    }
+	    xhr.ontimeout = errorFunc
+	    xhr.open(method, uri, !sync)
+	    //has to be after open
+	    xhr.withCredentials = !!options.withCredentials
+	    
+	    // Cannot set timeout with sync request
+	    // not setting timeout on the xhr object, because of old webkits etc. not handling that correctly
+	    // both npm's request and jquery 1.x use this kind of timeout, so this is being consistent
+	    if (!sync && options.timeout > 0 ) {
+	        timeoutTimer = setTimeout(function(){
+	            xhr.abort("timeout");
+	        }, options.timeout+2 );
+	    }
+
+	    if (xhr.setRequestHeader) {
+	        for(key in headers){
+	            if(headers.hasOwnProperty(key)){
+	                xhr.setRequestHeader(key, headers[key])
+	            }
+	        }
+	    } else if (options.headers) {
+	        throw new Error("Headers cannot be set on an XDomainRequest object")
+	    }
+
+	    if ("responseType" in options) {
+	        xhr.responseType = options.responseType
+	    }
+	    
+	    if ("beforeSend" in options && 
+	        typeof options.beforeSend === "function"
+	    ) {
+	        options.beforeSend(xhr)
+	    }
+
+	    xhr.send(body)
+
+	    return xhr
+
+
+	}
+
+
+	function noop() {}
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {if (typeof window !== "undefined") {
+	    module.exports = window;
+	} else if (typeof global !== "undefined") {
+	    module.exports = global;
+	} else if (typeof self !== "undefined"){
+	    module.exports = self;
+	} else {
+	    module.exports = {};
+	}
+
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = once
+
+	once.proto = once(function () {
+	  Object.defineProperty(Function.prototype, 'once', {
+	    value: function () {
+	      return once(this)
+	    },
+	    configurable: true
+	  })
+	})
+
+	function once (fn) {
+	  var called = false
+	  return function () {
+	    if (called) return
+	    called = true
+	    return fn.apply(this, arguments)
+	  }
+	}
+
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isFunction = __webpack_require__(12)
+
+	module.exports = forEach
+
+	var toString = Object.prototype.toString
+	var hasOwnProperty = Object.prototype.hasOwnProperty
+
+	function forEach(list, iterator, context) {
+	    if (!isFunction(iterator)) {
+	        throw new TypeError('iterator must be a function')
+	    }
+
+	    if (arguments.length < 3) {
+	        context = this
+	    }
+	    
+	    if (toString.call(list) === '[object Array]')
+	        forEachArray(list, iterator, context)
+	    else if (typeof list === 'string')
+	        forEachString(list, iterator, context)
+	    else
+	        forEachObject(list, iterator, context)
+	}
+
+	function forEachArray(array, iterator, context) {
+	    for (var i = 0, len = array.length; i < len; i++) {
+	        if (hasOwnProperty.call(array, i)) {
+	            iterator.call(context, array[i], i, array)
+	        }
+	    }
+	}
+
+	function forEachString(string, iterator, context) {
+	    for (var i = 0, len = string.length; i < len; i++) {
+	        // no such thing as a sparse string.
+	        iterator.call(context, string.charAt(i), i, string)
+	    }
+	}
+
+	function forEachObject(object, iterator, context) {
+	    for (var k in object) {
+	        if (hasOwnProperty.call(object, k)) {
+	            iterator.call(context, object[k], k, object)
+	        }
+	    }
+	}
+
+
+/***/ },
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = isFunction
+
+	var toString = Object.prototype.toString
+
+	function isFunction (fn) {
+	  var string = toString.call(fn)
+	  return string === '[object Function]' ||
+	    (typeof fn === 'function' && string !== '[object RegExp]') ||
+	    (typeof window !== 'undefined' &&
+	     // IE8 and below
+	     (fn === window.setTimeout ||
+	      fn === window.alert ||
+	      fn === window.confirm ||
+	      fn === window.prompt))
+	};
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	exports = module.exports = trim;
+
+	function trim(str){
+	  return str.replace(/^\s*|\s*$/g, '');
+	}
+
+	exports.left = function(str){
+	  return str.replace(/^\s*/, '');
+	};
+
+	exports.right = function(str){
+	  return str.replace(/\s*$/, '');
+	};
+
+
+/***/ },
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var trim = __webpack_require__(13)
+	  , forEach = __webpack_require__(11)
+	  , isArray = function(arg) {
+	      return Object.prototype.toString.call(arg) === '[object Array]';
+	    }
+
+	module.exports = function (headers) {
+	  if (!headers)
+	    return {}
+
+	  var result = {}
+
+	  forEach(
+	      trim(headers).split('\n')
+	    , function (row) {
+	        var index = row.indexOf(':')
+	          , key = trim(row.slice(0, index)).toLowerCase()
+	          , value = trim(row.slice(index + 1))
+
+	        if (typeof(result[key]) === 'undefined') {
+	          result[key] = value
+	        } else if (isArray(result[key])) {
+	          result[key].push(value)
+	        } else {
+	          result[key] = [ result[key], value ]
+	        }
+	      }
+	  )
+
+	  return result
+	}
 
 /***/ }
 /******/ ])));

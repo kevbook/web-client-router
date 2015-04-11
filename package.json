@@ -23,7 +23,6 @@
     "isarray": "0.0.1",
     "kevbook.flow": "latest",
     "path-to-regexp": "^1.0.3",
-    "query-string": "^1.0.0",
     "tiny-emitter": "^1.0.0",
     "xhr": "latest"
   },

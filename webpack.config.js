@@ -25,7 +25,8 @@ exports.config = {
   },
   plugins: [
     new webpack.optimize.DedupePlugin(),
-    new webpack.optimize.OccurenceOrderPlugin()
+    new webpack.optimize.OccurenceOrderPlugin(),
+    new webpack.optimize.AggressiveMergingPlugin()
   ],
   resolve: {
     // root: __dirname,
