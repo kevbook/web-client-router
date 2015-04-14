@@ -15,7 +15,7 @@ var router = new Router([
     pre: function(route, next) {
       return next(null, 'some result');
     },
-    get: ['/']
+    get: '/'
   },
 
   {
@@ -44,7 +44,7 @@ var router = new Router([
     path: '/abc/:a/:b',
     title: 'Abc/Super/a/b Page',
     handler: handler,
-    get: ['/{a}']
+    get: { name: '/{a}', man: '/hello' }
   },
 
   // Catch all 404 handler

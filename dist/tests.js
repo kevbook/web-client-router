@@ -82,7 +82,7 @@
 	    pre: function(route, next) {
 	      return next(null, 'some result');
 	    },
-	    get: ['/']
+	    get: '/'
 	  },
 
 	  {
@@ -111,7 +111,7 @@
 	    path: '/abc/:a/:b',
 	    title: 'Abc/Super/a/b Page',
 	    handler: handler,
-	    get: ['/{a}']
+	    get: { name: '/{a}', man: '/hello' }
 	  },
 
 	  // Catch all 404 handler
@@ -229,19 +229,23 @@
 	    params.push([keys[i].name]);
 
 
-	  return routes.push({
+	  routes.push({
 	    re: pathToRegexp(route.path),
 	    params: params,
 	    handler: route.handler,
 	    title: route.title || null,
 
+	    // Handle variants of pre
 	    pre: typeof route.pre === 'function'
 	      ? [route.pre]
 	      : isArray(route.pre) ? route.pre : null,
 
-	    get: typeof route.get === 'string'
-	      ? [ route.get ]
-	      : isArray(route.get) ? route.get : null,
+	    // @param {String} | {Object}
+	    get: (typeof route.get === 'string')
+	          ? { 0: route.get }
+	          : typeof route.get === 'object' && !(route.get instanceof Array)
+	            ? route.get
+	            : null
 	  });
 	};
 
@@ -406,10 +410,11 @@
 
 	  var that = this;
 
-	  return flow.parallelMap(fns, function(url, next) {
+	  return flow.parallelMap(Object.keys(fns), function(key, next) {
 
 	    var opts = JSON.parse(JSON.stringify(xhrOpts));
-	    opts.url = that.teml(url, ret.params);
+	    opts.url = that.teml(fns[key], ret.params);
+
 	    console.log('GET %s', opts.url);
 
 	    xhr(opts, function(err, res) {
@@ -420,11 +425,25 @@
 
 	      return next(err, {
 	        statusCode: res.statusCode,
-	        data: res.body
+	        data: res.body,
+	        key: key
 	      });
 
 	    });
-	  }, cb);
+	  }, function(err, done) {
+
+	    if (done) {
+	      done = done.reduce(function(ret, o) {
+	        ret[o.key] = {
+	          statusCode: o.statusCode,
+	          data: o.data
+	        };
+	        return ret;
+	      }, {});
+	    }
+
+	    return cb(err, done);
+	  });
 	};
 
 

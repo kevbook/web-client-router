@@ -1,7 +1,7 @@
 {
-  "name": "client-router",
+  "name": "web-client-router",
   "description": "Express style client router for single page web apps",
-  "homepage": "https://github.com/kevbook/client-router",
+  "homepage": "https://github.com/kevbook/web-client-router",
   "keywords": [
     "router",
     "route",
@@ -17,7 +17,7 @@
   },
   "license": "GNU",
   "bugs": {
-    "url": "https://github.com/kevbook/client-router/issues"
+    "url": "https://github.com/kevbook/web-client-router/issues"
   },
   "dependencies": {
     "isarray": "0.0.1",

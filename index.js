@@ -69,19 +69,23 @@ Router.prototype.addRoute = function(route) {
     params.push([keys[i].name]);
 
 
-  return routes.push({
+  routes.push({
     re: pathToRegexp(route.path),
     params: params,
     handler: route.handler,
     title: route.title || null,
 
+    // Handle variants of pre
     pre: typeof route.pre === 'function'
       ? [route.pre]
       : isArray(route.pre) ? route.pre : null,
 
-    get: typeof route.get === 'string'
-      ? [ route.get ]
-      : isArray(route.get) ? route.get : null,
+    // @param {String} | {Object}
+    get: (typeof route.get === 'string')
+          ? { 0: route.get }
+          : typeof route.get === 'object' && !(route.get instanceof Array)
+            ? route.get
+            : null
   });
 };
 
