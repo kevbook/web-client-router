@@ -81,11 +81,12 @@ Router.prototype.addRoute = function(route) {
       : isArray(route.pre) ? route.pre : null,
 
     // @param {String} | {Object}
-    get: (typeof route.get === 'string')
+    get: utils.cacheBust( (typeof route.get === 'string')
           ? { 0: route.get }
           : typeof route.get === 'object' && !(route.get instanceof Array)
             ? route.get
             : null
+        )
   });
 };
 

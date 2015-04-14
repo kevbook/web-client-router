@@ -1,4 +1,7 @@
 
+
+console.log('Running tests.js');
+
 var Router = require('..');
 
 var handler = function(data) {

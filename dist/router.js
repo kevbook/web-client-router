@@ -40,43 +40,31 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ((function(modules) {
-	// Check all modules for deduplicated modules
-	for(var i in modules) {
-		if(Object.prototype.hasOwnProperty.call(modules, i)) {
-			switch(typeof modules[i]) {
-			case "number":
-				// Module is a copy of another module
-				modules[i] = modules[modules[i]];
-				break;
-			case "object":
-				// Module can be created from a template
-				modules[i] = (function(_m) {
-					var args = _m.slice(1), fn = modules[_m[0]];
-					return function (a,b,c) {
-						fn.apply(null, [a,b,c].concat(args));
-					};
-				}(modules[i]));
-			}
-		}
-	}
-	return modules;
-}([
+/******/ ([
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(1);
+	module.exports = __webpack_require__(2);
 
 
 /***/ },
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
+	module.exports = Array.isArray || function (arr) {
+	  return Object.prototype.toString.call(arr) == '[object Array]';
+	};
+
+
+/***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
 	
 	var pathToRegexp = __webpack_require__(5),
-	  isArray = __webpack_require__(3),
-	  utils = __webpack_require__(2),
-	  Emitter = __webpack_require__(7);
+	  isArray = __webpack_require__(1),
+	  utils = __webpack_require__(3),
+	  Emitter = __webpack_require__(6);
 
 
 	module.exports = Router;
@@ -155,11 +143,12 @@
 	      : isArray(route.pre) ? route.pre : null,
 
 	    // @param {String} | {Object}
-	    get: (typeof route.get === 'string')
+	    get: utils.cacheBust( (typeof route.get === 'string')
 	          ? { 0: route.get }
 	          : typeof route.get === 'object' && !(route.get instanceof Array)
 	            ? route.get
 	            : null
+	        )
 	  });
 	};
 
@@ -294,18 +283,40 @@
 
 
 /***/ },
-/* 2 */
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	//,
 	var flow = __webpack_require__(4),
-	  xhr = __webpack_require__(8);
+	  xhr = __webpack_require__(7);
 
 
 	module.exports = Utils;
 
 	function Utils(){};
+
+
+	Utils.appendUrl = function(url) {
+
+	  url = url || '';
+	  url = ~url.indexOf('?')
+	    ? url.concat('&_={cache}')
+	    : url.concat('?_={cache}');
+
+	  return url;
+	}
+
+	Utils.cacheBust = function(get) {
+
+	  if (get === null) return null;
+
+	  for(var i in get)
+	    get[i] = Utils.appendUrl(get[i]);
+
+	  return get;
+	}
+
 
 	Utils.updateTitle = function(title) {
 	  document.title = title;
@@ -327,6 +338,8 @@
 	  return flow.parallelMap(Object.keys(fns), function(key, next) {
 
 	    var opts = JSON.parse(JSON.stringify(xhrOpts));
+
+	    ret.params.cache = new Date().getTime();
 	    opts.url = that.teml(fns[key], ret.params);
 
 	    console.log('GET %s', opts.url);
@@ -366,23 +379,16 @@
 	 * var hello = teml("Hello, {name}!", {name: 'k' })
 	 */
 	Utils.teml = function (s, v) {
-	  return s.replace(/\{([^}]+)\}/g, function(f, k) {
+	  return s && s.replace(/\{([^}]+)\}/g, function(f, k) {
 	    return v[k] ? v[k] : f;
 	  });
+
+	  return s;
 	};
 
 
 	Utils.getQuerystring = function() {
 	  var qs = window.location.search;
-	};
-
-
-/***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = Array.isArray || function (arr) {
-	  return Object.prototype.toString.call(arr) == '[object Array]';
 	};
 
 
@@ -584,7 +590,7 @@
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArray = __webpack_require__(6);
+	var isArray = __webpack_require__(1);
 
 	/**
 	 * Expose `pathToRegexp`.
@@ -790,8 +796,6 @@
 
 /***/ },
 /* 6 */
-3,
-/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	function E () {
@@ -861,13 +865,13 @@
 
 
 /***/ },
-/* 8 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var window = __webpack_require__(9)
-	var once = __webpack_require__(10)
-	var parseHeaders = __webpack_require__(14)
+	var window = __webpack_require__(8)
+	var once = __webpack_require__(9)
+	var parseHeaders = __webpack_require__(13)
 
 
 	var XHR = window.XMLHttpRequest || noop
@@ -1037,7 +1041,7 @@
 
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {if (typeof window !== "undefined") {
@@ -1053,7 +1057,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = once
@@ -1078,10 +1082,10 @@
 
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isFunction = __webpack_require__(12)
+	var isFunction = __webpack_require__(11)
 
 	module.exports = forEach
 
@@ -1130,7 +1134,7 @@
 
 
 /***/ },
-/* 12 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = isFunction
@@ -1151,7 +1155,7 @@
 
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -1171,11 +1175,11 @@
 
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var trim = __webpack_require__(13)
-	  , forEach = __webpack_require__(11)
+	var trim = __webpack_require__(12)
+	  , forEach = __webpack_require__(10)
 	  , isArray = function(arg) {
 	      return Object.prototype.toString.call(arg) === '[object Array]';
 	    }
@@ -1207,4 +1211,4 @@
 	}
 
 /***/ }
-/******/ ])));
+/******/ ]);
