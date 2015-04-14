@@ -106,7 +106,7 @@ var router = new Router([
   // Catch all 404 handler
   {
     path: '/*',
- 	  handler: function(data) {
+    handler: function(data) {
       console.log(data);
     }  
   },
@@ -123,5 +123,34 @@ var router = new Router([
   // If the server has already rendered the page, 
   // and you don't want the initial route to be triggered, pass silent: true.
   silent: true
+});
+```
+
+#### More things
+
+```js 
+// You can also listen to events 
+router.events.on('route_complete', function(url) {
+  console.log(url)
+});
+
+router.events.on('route_matched', function(url) {
+  console.log(url)
+});
+
+router.events.on('route_error', function(err) {
+  console.log(err)
+});
+
+router.events.on('route_not_found', function(url) {
+  console.log(url)
+});
+
+// You can also add a route later on
+router.addRoute({
+  path: '/some-route',
+  handler: function(data) {
+    console.log(data);
+  }
 });
 ```
