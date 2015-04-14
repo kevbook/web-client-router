@@ -13,36 +13,34 @@ Uses [ExpressJs](http://expressjs.com) style routing on the client side. See [Ro
 
 
 ```js
-npm install web-client-router --save
+$ npm install web-client-router --save
 var Router = require('web-client-router');
-
-// Handler
-function handler(data) {
-  console.log(data);
-};
 
 // Init the router
 var router = new Router([
   {
-  // Router path
-    path: '/',
+	  // Router path  
+    path: '/', 
 
-  // Optional to change document title
-    title: 'Root Page',
+	  // To change document title (Optional)
+    title: 'Landing Page',
 
     // Pre middleware is executed before handler is executed
+    // @param {[Functions]} || {Function}
     pre: function(route, next) {
       return next(null, 'some result');
-    }
-
-  handler: function(data) {
+    },
+    
+ 	  handler: function(data) {
+ 	   	// data.get , data.params , data.url , data.lastUrl
       console.log(data);
     }
   },
 
   {
+    // Router path
     path: '/abc',
-
+    
     // Pre middleware can be an array of functions executed in order
     pre: [
       function auth(route, next) {
@@ -51,44 +49,56 @@ var router = new Router([
       function(route, next) {
         return next();
       }
-    ],
-  handler: function(data) {
+    ],    
+ 	  
+ 	  handler: function(data) {
+ 	   // data.pre , data.params , data.url , data.lastUrl 
       console.log(data);
     }
   },
 
   {
-  // Router path can also contain params just like express router
+	  // Router path can also contain params just like express router
     path: '/abc/:paramA/:paramB',
-
-  // After any pre middleware is executed, GET request is made to prefetch the data from a web api
+    
+	  // After any pre middleware is executed, GET request is made 
+	  // to prefetch the data from a web api
     get: '/service/data.json',
-
-  handler: function(data) {
+    
+ 	  handler: function(data) {
+ 	    // data.get , data.params , data.url , data.lastUrl 
       console.log(data);
     }
   },
 
   {
-  // Router path can also contain params just like express router
+	  // Router path can also contain params just like express router
     path: '/xyz/:paramA',
-
-  // GET requests can be an object executed parallel-ly
-  get: { profile: '/service/profile.json', account: '/service/acount.json'}
-
-  handler: function(data) {
+    
+	  // GET requests can be an object executed parallel-ly 
+	  get: { 
+	    profile: '/service/profile.json', 
+	    account: '/service/acount.json'
+	  },
+    
+ 	  handler: function(data) {
+ 	   // data.get , data.params , data.url , data.lastUrl 
       console.log(data);
     }
   },
 
   {
-  // Router path can also contain params just like express router
+	  // Router path can also contain params just like express router
     path: '/xyz/:userid',
-
-  // GET requests urls can have params as variables
-  get: { profile: '/service/profile.json/{userid}', account: '/service/acount.json/{userid}'}
-
-  handler: function(data) {
+    
+	  // GET requests urls can have params as variables 
+	  get: { 
+	    profile: '/service/profile.json/{userid}', 
+	    account: '/service/acount.json/{userid}'
+	  },
+	  
+ 	  handler: function(data) {
+ 	   // data.get , data.params , data.url , data.lastUrl 
       console.log(data);
     }
   },
@@ -96,20 +106,22 @@ var router = new Router([
   // Catch all 404 handler
   {
     path: '/*',
-  handler: function(data) {
+ 	  handler: function(data) {
       console.log(data);
-    }  },
-
+    }  
+  },
 ], {
 
-  // Any customer request headers or options are passed to the xhr module
+  // Any customer request options are passed to the xhr module 
+  // See: https://github.com/Raynos/xhr
   xhr: {
     headers: {
       'Content-Tyoe': 'application/json'
     }
   }
-
-  // If the server has already rendered the page, and you don't want the initial route to be triggered, pass silent: true.
+  
+  // If the server has already rendered the page, 
+  // and you don't want the initial route to be triggered, pass silent: true.
   silent: true
 });
 ```
