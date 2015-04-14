@@ -39,5 +39,12 @@
     "strip-loader": "latest",
     "webpack": "latest",
     "yargs": "latest"
+  },
+  "version": "1.0.0",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }
