@@ -48,7 +48,7 @@ function Router(Routes, opts) {
 
     // If the server has already rendered the page,
     // and you don't want the initial route to be triggered
-    (opts.silent !== true)
+    (that.opts.silent !== true)
       ? that.go(window.location.pathname || '')
       : that.gotoRoute(window.location.pathname || '');
 
