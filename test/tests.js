@@ -66,9 +66,8 @@ var router = new Router([
   // silent: true
 });
 
-// router.addRoute({
-//   path:
-// });
+// start the router
+router.start();
 
 // Testing events
 router.events.on('route_complete', function() {

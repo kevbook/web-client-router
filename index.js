@@ -29,7 +29,6 @@ function Router(Routes, opts) {
   this._opts = opts || {};
   this.events = events;
   this._lastFragment = null;
-  var that = this;
 
 
   // Add routes
@@ -41,18 +40,18 @@ function Router(Routes, opts) {
 
   // Init the window listener
   window.addEventListener('popstate', this._onPopstate.bind(this), false);
+};
 
 
-  // Emulating nextTick on the browser
-  setTimeout(function() {
+Router.prototype.start = function() {
 
-    // If the server has already rendered the page,
-    // and you don't want the initial route to be triggered
-    (that._opts.silent !== true)
-      ? that.go(window.location.pathname || '')
-      : that._gotoRoute(window.location.pathname || '');
+  // If the server has already rendered the page,
+  // and you don't want the initial route to be triggered
+  (this._opts.silent !== true)
+    ? this.go(window.location.pathname || '')
+    : this._gotoRoute(window.location.pathname || '');
 
-  }, 0);
+  return this;
 };
 
 
@@ -205,7 +204,7 @@ Router.prototype.go = function(url, opts) {
 
   if (!ret) {
     events.emit('route_not_found', url);
-    throw new Error('Route not found.');
+    // throw new Error('Route not found.');
   }
 
   // Force a path
