@@ -26,9 +26,9 @@ function Router(Routes, opts) {
 
 
   // Init things
-  this.opts = opts || {};
+  this._opts = opts || {};
   this.events = events;
-  this.lastFragment = null;
+  this._lastFragment = null;
   var that = this;
 
 
@@ -40,7 +40,7 @@ function Router(Routes, opts) {
   }
 
   // Init the window listener
-  window.addEventListener('popstate', this.onPopstate.bind(this), false);
+  window.addEventListener('popstate', this._onPopstate.bind(this), false);
 
 
   // Emulating nextTick on the browser
@@ -48,9 +48,9 @@ function Router(Routes, opts) {
 
     // If the server has already rendered the page,
     // and you don't want the initial route to be triggered
-    (that.opts.silent !== true)
+    (that._opts.silent !== true)
       ? that.go(window.location.pathname || '')
-      : that.gotoRoute(window.location.pathname || '');
+      : that._gotoRoute(window.location.pathname || '');
 
   }, 0);
 };
@@ -91,7 +91,7 @@ Router.prototype.addRoute = function(route) {
 };
 
 
-Router.prototype.cleanFragment = function(fragment) {
+Router.prototype._cleanFragment = function(fragment) {
 
   // Clean out any hashes
   fragment = fragment.replace(/#.*/, '');
@@ -110,7 +110,7 @@ Router.prototype.cleanFragment = function(fragment) {
 };
 
 
-Router.prototype.matchPath = function(url, route) {
+Router.prototype._matchPath = function(url, route) {
 
   var m = route.re.exec(url);
   if (!m) return false;
@@ -123,15 +123,17 @@ Router.prototype.matchPath = function(url, route) {
 };
 
 
-Router.prototype.onPopstate = function(e) {
+Router.prototype._onPopstate = function(e) {
   routerStarted = false;
   this.go(window.location.pathname || '');
 };
 
 
-Router.prototype.gotoRoute = function(url, route, data, opts) {
+Router.prototype._gotoRoute = function(url, route, data, opts) {
 
   if (route && route.title) utils.updateTitle(route.title);
+
+  console.log('=====+++====', routerStarted);
 
   if (routerStarted) {
     window.history[opts.replace
@@ -140,8 +142,8 @@ Router.prototype.gotoRoute = function(url, route, data, opts) {
   }
 
   routerStarted = true;
-  data.lastUrl = this.lastFragment;
-  this.lastFragment = url;
+  data.lastUrl = this._lastFragment;
+  this._lastFragment = url;
 
   events.emit('route_complete', url);
   if (route && route.handler) route.handler(data);
@@ -151,13 +153,13 @@ Router.prototype.gotoRoute = function(url, route, data, opts) {
 Router.prototype.go = function(url, opts) {
 
   opts = opts || {};
-  url = this.cleanFragment(url);
+  url = this._cleanFragment(url);
   var that = this;
 
 
   for (var ret, i=0, len=routes.length; i<len; i++) {
 
-    ret = this.matchPath(url, routes[i]);
+    ret = this._matchPath(url, routes[i]);
 
     if (ret) {
 
@@ -166,20 +168,20 @@ Router.prototype.go = function(url, opts) {
       var processRoute = function() {
         // Get request
         if (routes[i].get) {
-          utils.get(that.opts.xhr, ret, routes[i].get,
+          utils.get(that._opts.xhr, ret, routes[i].get,
             function(err, get) {
               if (err) {
                 events.emit('route_error', err);
               }
               else {
                 ret.get = get;
-                that.gotoRoute(url, routes[i], ret, opts);
+                that._gotoRoute(url, routes[i], ret, opts);
               }
           });
         }
 
         else {
-          that.gotoRoute(url, routes[i], ret, opts);
+          that._gotoRoute(url, routes[i], ret, opts);
         }
       };
 
