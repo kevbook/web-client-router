@@ -133,8 +133,6 @@ Router.prototype._gotoRoute = function(url, route, data, opts) {
 
   if (route && route.title) utils.updateTitle(route.title);
 
-  console.log('=====+++====', routerStarted);
-
   if (routerStarted) {
     window.history[opts.replace
       ? 'replaceState'
