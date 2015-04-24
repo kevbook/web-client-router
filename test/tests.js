@@ -5,14 +5,12 @@ console.log('Running tests.js');
 var Router = require('..');
 
 var handler = function(data) {
-  console.log(data);
-  var el = document.getElementById('route')
-  el.textContent = data.url;
+  var el = document.getElementById('route');
+  if (el) el.textContent = data.url;
 };
 
-var router = new Router([
-  {
-    path: '/',
+var router = new Router({
+  '/': {
     title: 'Root Page',
     handler: handler,
     pre: function(route, next) {
@@ -21,8 +19,7 @@ var router = new Router([
     get: '/'
   },
 
-  {
-    path: '/abc',
+  '/abc': {
     title: 'Abc Page',
     handler: handler,
     pre: [
@@ -37,26 +34,23 @@ var router = new Router([
     ]
   },
 
-  {
-    path: '/abc/super',
+  '/abc/super': {
     title: 'Abc/Super Page',
     handler: handler
   },
 
-  {
-    path: '/abc/:a/:b',
+  '/abc/:a/:b': {
     title: 'Abc/Super/a/b Page',
     handler: handler,
     get: { name: '/{a}', man: '/hello' }
   },
 
   // Catch all 404 handler
-  {
-    path: '/*',
+  '/*': {
     handler: handler
   },
 
-], {
+}, {
 
   xhr: {
     headers: {
@@ -86,4 +80,4 @@ router.events.on('route_not_found', function() {
   console.log('route_not_found');
 });
 
-window.r = router;
+window.router = router;

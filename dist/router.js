@@ -75,7 +75,7 @@
 	var routes = [];
 
 
-	function Router(Routes, opts) {
+	function Router(routesMap, opts) {
 
 	  if (typeof window === 'undefined')
 	    throw new Error('This module can only be used in a web browser.');
@@ -88,33 +88,34 @@
 
 
 	  // Init things
-	  this.opts = opts || {};
+	  this._opts = opts || {};
 	  this.events = events;
-	  this.lastFragment = null;
-	  var that = this;
+	  this._lastFragment = null;
 
 
 	  // Add routes
-	  if (isArray(Routes)) {
+	  if (typeof routesMap === 'object') {
 
-	    for (var i=0, len=Routes.length; i<len; i++)
-	      this.addRoute(Routes[i]);
+	    for (var i in routesMap) {
+	      routesMap[i].path = i;
+	      this.addRoute(routesMap[i]);
+	    }
 	  }
 
 	  // Init the window listener
-	  window.addEventListener('popstate', this.onPopstate.bind(this), false);
+	  window.addEventListener('popstate', this._onPopstate.bind(this), false);
+	};
 
 
-	  // Emulating nextTick on the browser
-	  setTimeout(function() {
+	Router.prototype.start = function() {
 
-	    // If the server has already rendered the page,
-	    // and you don't want the initial route to be triggered
-	    (opts.silent !== true)
-	      ? that.go(window.location.pathname || '')
-	      : that.gotoRoute(window.location.pathname || '');
+	  // If the server has already rendered the page,
+	  // and you don't want the initial route to be triggered
+	  (this._opts.silent !== true)
+	    ? this.go(window.location.pathname || '')
+	    : this._gotoRoute(window.location.pathname || '');
 
-	  }, 0);
+	  return this;
 	};
 
 
@@ -153,7 +154,7 @@
 	};
 
 
-	Router.prototype.cleanFragment = function(fragment) {
+	Router.prototype._cleanFragment = function(fragment) {
 
 	  // Clean out any hashes
 	  fragment = fragment.replace(/#.*/, '');
@@ -172,7 +173,7 @@
 	};
 
 
-	Router.prototype.matchPath = function(url, route) {
+	Router.prototype._matchPath = function(url, route) {
 
 	  var m = route.re.exec(url);
 	  if (!m) return false;
@@ -185,13 +186,13 @@
 	};
 
 
-	Router.prototype.onPopstate = function(e) {
+	Router.prototype._onPopstate = function(e) {
 	  routerStarted = false;
 	  this.go(window.location.pathname || '');
 	};
 
 
-	Router.prototype.gotoRoute = function(url, route, data, opts) {
+	Router.prototype._gotoRoute = function(url, route, data, opts) {
 
 	  if (route && route.title) utils.updateTitle(route.title);
 
@@ -202,8 +203,8 @@
 	  }
 
 	  routerStarted = true;
-	  data.lastUrl = this.lastFragment;
-	  this.lastFragment = url;
+	  data.lastUrl = this._lastFragment;
+	  this._lastFragment = url;
 
 	  events.emit('route_complete', url);
 	  if (route && route.handler) route.handler(data);
@@ -213,13 +214,13 @@
 	Router.prototype.go = function(url, opts) {
 
 	  opts = opts || {};
-	  url = this.cleanFragment(url);
+	  url = this._cleanFragment(url);
 	  var that = this;
 
 
 	  for (var ret, i=0, len=routes.length; i<len; i++) {
 
-	    ret = this.matchPath(url, routes[i]);
+	    ret = this._matchPath(url, routes[i]);
 
 	    if (ret) {
 
@@ -228,20 +229,20 @@
 	      var processRoute = function() {
 	        // Get request
 	        if (routes[i].get) {
-	          utils.get(that.opts.xhr, ret, routes[i].get,
+	          utils.get(that._opts.xhr, ret, routes[i].get,
 	            function(err, get) {
 	              if (err) {
 	                events.emit('route_error', err);
 	              }
 	              else {
 	                ret.get = get;
-	                that.gotoRoute(url, routes[i], ret, opts);
+	                that._gotoRoute(url, routes[i], ret, opts);
 	              }
 	          });
 	        }
 
 	        else {
-	          that.gotoRoute(url, routes[i], ret, opts);
+	          that._gotoRoute(url, routes[i], ret, opts);
 	        }
 	      };
 
@@ -267,7 +268,7 @@
 
 	  if (!ret) {
 	    events.emit('route_not_found', url);
-	    throw new Error('Route not found.');
+	    // throw new Error('Route not found.');
 	  }
 
 	  // Force a path

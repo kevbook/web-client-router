@@ -17,10 +17,9 @@ $ npm install web-client-router --save
 var Router = require('web-client-router');
 
 // Create a router instance
-var router = new Router([
-  {
-	  // Router path
-    path: '/',
+var router = new Router({
+
+  '/': {
 
 	  // To change document title (Optional)
     title: 'Landing Page',
@@ -37,10 +36,7 @@ var router = new Router([
     }
   },
 
-  {
-    // Router path
-    path: '/abc',
-
+  '/abc': {
     // Pre middleware can be an array of functions executed in order
     pre: [
       function auth(route, next) {
@@ -57,9 +53,8 @@ var router = new Router([
     }
   },
 
-  {
-	  // Router path can also contain params just like express router
-    path: '/abc/:paramA/:paramB',
+  // Router path can also contain params just like express router
+  '/abc/:paramA/:paramB': {
 
 	  // After any pre middleware is executed, GET request is made
 	  // to prefetch the data from a web api
@@ -71,9 +66,8 @@ var router = new Router([
     }
   },
 
-  {
-	  // Router path can also contain params just like express router
-    path: '/xyz/:paramA',
+    // Router path can also contain params just like express router
+  '/xyz/:paramA': {
 
 	  // GET requests can be an object executed parallel-ly
 	  get: {
@@ -87,9 +81,8 @@ var router = new Router([
     }
   },
 
-  {
-	  // Router path can also contain params just like express router
-    path: '/xyz/:userid',
+  // Router path can also contain params just like express router
+  '/xyz/:userid': {
 
 	  // GET requests urls can have params as variables
 	  get: {
@@ -104,15 +97,14 @@ var router = new Router([
   },
 
   // Catch all 404 handler
-  {
-    path: '/*',
+  '/*': {
     handler: function(data) {
       console.log(data);
     }
   },
-], {
+}, {
 
-  // Any customer request options are passed to the xhr module
+  // Any xhr options are passed to the xhr module
   // See: https://github.com/Raynos/xhr
   xhr: {
     headers: {

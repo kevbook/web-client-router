@@ -13,7 +13,7 @@ var events = new Emitter();
 var routes = [];
 
 
-function Router(Routes, opts) {
+function Router(routesMap, opts) {
 
   if (typeof window === 'undefined')
     throw new Error('This module can only be used in a web browser.');
@@ -32,10 +32,12 @@ function Router(Routes, opts) {
 
 
   // Add routes
-  if (isArray(Routes)) {
+  if (typeof routesMap === 'object') {
 
-    for (var i=0, len=Routes.length; i<len; i++)
-      this.addRoute(Routes[i]);
+    for (var i in routesMap) {
+      routesMap[i].path = i;
+      this.addRoute(routesMap[i]);
+    }
   }
 
   // Init the window listener
