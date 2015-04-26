@@ -122,7 +122,7 @@ router.start();
 
 // Go to a path
 // @opts {Object} - optional
-// opts.replace = true --> to replace history starte instead of push
+// opts.replace = true --> to replace history state instead of push state
 router.go('/new-url', [opts])
 ```
 
