@@ -225,10 +225,6 @@
 	    params.push([keys[i].name]);
 
 
-	  console.log('----');
-	  console.log(params);
-
-
 	  routes.push({
 	    re: pathToRegexp(route.path),
 	    params: params,
@@ -302,6 +298,10 @@
 	  routerStarted = true;
 	  data.lastUrl = lastFragment;
 	  lastFragment = url;
+
+	  // Cleaning up params
+	  delete data.params['undefined'];
+	  delete data.params['__cache'];
 
 	  events.emit('route_complete', url);
 	  if (route && route.handler) route.handler(data);
@@ -398,8 +398,8 @@
 
 	  url = url || '';
 	  url = ~url.indexOf('?')
-	    ? url.concat('&_={cache}')
-	    : url.concat('?_={cache}');
+	    ? url.concat('&_={__cache}')
+	    : url.concat('?_={__cache}');
 
 	  return url;
 	}
@@ -436,7 +436,7 @@
 
 	    var opts = JSON.parse(JSON.stringify(xhrOpts));
 
-	    ret.params.cache = new Date().getTime();
+	    ret.params.__cache = new Date().getTime();
 	    opts.url = that.teml(fns[key], ret.params);
 
 	    console.log('GET %s', opts.url);

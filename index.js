@@ -80,10 +80,6 @@ Router.addRoute = function(route) {
     params.push([keys[i].name]);
 
 
-  console.log('----');
-  console.log(params);
-
-
   routes.push({
     re: pathToRegexp(route.path),
     params: params,
@@ -157,6 +153,10 @@ Router.gotoRoute = function(url, route, data, Opts) {
   routerStarted = true;
   data.lastUrl = lastFragment;
   lastFragment = url;
+
+  // Cleaning up params
+  delete data.params['undefined'];
+  delete data.params['__cache'];
 
   events.emit('route_complete', url);
   if (route && route.handler) route.handler(data);
