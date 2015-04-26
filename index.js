@@ -20,7 +20,7 @@ function Router(routesMap, Opts) {
   if (typeof window === 'undefined')
     throw new Error('This module can only be used in a web browser.');
 
-  if ( !(window.location && window.history))
+  if (!utils.supportsHistory())
     throw new Error('history is not available, upgrade browser.');
 
   if (routerStarted)
