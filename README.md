@@ -16,8 +16,8 @@ Uses [ExpressJs](http://expressjs.com) style routing on the client side. See [Ro
 $ npm install web-client-router --save
 var Router = require('web-client-router');
 
-// Create a router instance
-var router = new Router({
+// Create the router
+var router = Router({
 
   '/': {
 
@@ -119,6 +119,11 @@ var router = new Router({
 
 // Start the router
 router.start();
+
+// Go to a path
+// @opts {Object} - optional
+// opts.replace = true --> to replace history starte instead of push
+router.go('/new-url', [opts])
 ```
 
 #### More things
