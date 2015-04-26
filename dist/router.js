@@ -73,9 +73,11 @@
 	var routerStarted = false;
 	var events = new Emitter();
 	var routes = [];
+	var lastFragment = null;
+	var opts;
 
 
-	function Router(routesMap, opts) {
+	function Router(routesMap, Opts) {
 
 	  if (typeof window === 'undefined')
 	    throw new Error('This module can only be used in a web browser.');
@@ -88,9 +90,7 @@
 
 
 	  // Init things
-	  this._opts = opts || {};
-	  this.events = events;
-	  this._lastFragment = null;
+	  opts = Opts || {};
 
 
 	  // Add routes
@@ -98,28 +98,38 @@
 
 	    for (var i in routesMap) {
 	      routesMap[i].path = i;
-	      this.addRoute(routesMap[i]);
+	      Router.addRoute(routesMap[i]);
 	    }
 	  }
 
 	  // Init the window listener
-	  window.addEventListener('popstate', this._onPopstate.bind(this), false);
+	  window.addEventListener('popstate', Router.onPopstate, false);
+
+
+	  // @public Api
+	  return {
+	    _routes: routes,
+	    start: Router.start,
+	    addRoute: Router.addRoute,
+	    go: Router.go,
+	    events: events
+	  };
 	};
 
 
-	Router.prototype.start = function() {
+	Router.start = function() {
 
 	  // If the server has already rendered the page,
 	  // and you don't want the initial route to be triggered
-	  (this._opts.silent !== true)
-	    ? this.go(window.location.pathname || '')
-	    : this._gotoRoute(window.location.pathname || '');
+	  (opts.silent !== true)
+	    ? Router.go(window.location.pathname || '')
+	    : Router.gotoRoute(window.location.pathname || '');
 
 	  return this;
 	};
 
 
-	Router.prototype.addRoute = function(route) {
+	Router.addRoute = function(route) {
 
 	  if (!(route && route.path && typeof route.handler === 'function'))
 	    return false;
@@ -130,6 +140,10 @@
 
 	  for (var i=0, len=keys.length; i<len; i++)
 	    params.push([keys[i].name]);
+
+
+	  console.log('----');
+	  console.log(params);
 
 
 	  routes.push({
@@ -154,7 +168,7 @@
 	};
 
 
-	Router.prototype._cleanFragment = function(fragment) {
+	Router.cleanFragment = function(fragment) {
 
 	  // Clean out any hashes
 	  fragment = fragment.replace(/#.*/, '');
@@ -173,7 +187,7 @@
 	};
 
 
-	Router.prototype._matchPath = function(url, route) {
+	Router.matchPath = function(url, route) {
 
 	  var m = route.re.exec(url);
 	  if (!m) return false;
@@ -186,41 +200,40 @@
 	};
 
 
-	Router.prototype._onPopstate = function(e) {
+	Router.onPopstate = function(e) {
 	  routerStarted = false;
-	  this.go(window.location.pathname || '');
+	  Router.go(window.location.pathname || '');
 	};
 
 
-	Router.prototype._gotoRoute = function(url, route, data, opts) {
+	Router.gotoRoute = function(url, route, data, Opts) {
 
 	  if (route && route.title) utils.updateTitle(route.title);
 
 	  if (routerStarted) {
-	    window.history[opts.replace
+	    window.history[Opts.replace
 	      ? 'replaceState'
 	      : 'pushState']({}, document.title, url);
 	  }
 
 	  routerStarted = true;
-	  data.lastUrl = this._lastFragment;
-	  this._lastFragment = url;
+	  data.lastUrl = lastFragment;
+	  lastFragment = url;
 
 	  events.emit('route_complete', url);
 	  if (route && route.handler) route.handler(data);
 	};
 
 
-	Router.prototype.go = function(url, opts) {
+	Router.go = function(url, Opts) {
 
-	  opts = opts || {};
-	  url = this._cleanFragment(url);
-	  var that = this;
+	  Opts = Opts || {};
+	  url = Router.cleanFragment(url);
 
 
 	  for (var ret, i=0, len=routes.length; i<len; i++) {
 
-	    ret = this._matchPath(url, routes[i]);
+	    ret = Router.matchPath(url, routes[i]);
 
 	    if (ret) {
 
@@ -229,20 +242,20 @@
 	      var processRoute = function() {
 	        // Get request
 	        if (routes[i].get) {
-	          utils.get(that._opts.xhr, ret, routes[i].get,
+	          utils.get(opts.xhr, ret, routes[i].get,
 	            function(err, get) {
 	              if (err) {
 	                events.emit('route_error', err);
 	              }
 	              else {
 	                ret.get = get;
-	                that._gotoRoute(url, routes[i], ret, opts);
+	                Router.gotoRoute(url, routes[i], ret, Opts);
 	              }
 	          });
 	        }
 
 	        else {
-	          that._gotoRoute(url, routes[i], ret, opts);
+	          Router.gotoRoute(url, routes[i], ret, Opts);
 	        }
 	      };
 
@@ -275,9 +288,9 @@
 	  // if (opts.force) {
 	  //   window.history[opts.replace ? 'replaceState' : 'pushState']({}, document.title, url);
 	  // }
-	  //   return this.location.assign(url);
+	  //   return Router.location.assign(url);
 	  // }
-	  // if (options.trigger) return this.loadUrl(fragment);
+	  // if (options.trigger) return Router.loadUrl(fragment);
 	  // if (current === path && opts.force === false)
 	  //   return false;
 	};

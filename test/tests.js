@@ -5,11 +5,12 @@ console.log('Running tests.js');
 var Router = require('..');
 
 var handler = function(data) {
+  console.debug(data);
   var el = document.getElementById('route');
   if (el) el.textContent = data.url;
 };
 
-var router = new Router({
+var router = Router({
   '/': {
     title: 'Root Page',
     handler: handler,
@@ -60,8 +61,6 @@ var router = new Router({
   // silent: true
 });
 
-// start the router
-router.start();
 
 // Testing events
 router.events.on('route_complete', function() {
@@ -80,4 +79,6 @@ router.events.on('route_not_found', function() {
   console.log('route_not_found');
 });
 
-window.router = router;
+
+window.r = router;
+router.start();

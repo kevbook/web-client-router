@@ -1,5 +1,6 @@
 {
   "name": "web-client-router",
+  "version": "1.0.4",
   "description": "Express style client router for single page web apps",
   "homepage": "https://github.com/kevbook/web-client-router",
   "keywords": [
@@ -40,7 +41,6 @@
     "webpack": "latest",
     "yargs": "latest"
   },
-  "version": "1.0.3",
   "directories": {
     "test": "test"
   },
