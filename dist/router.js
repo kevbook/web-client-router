@@ -227,6 +227,11 @@
 
 	Router.go = function(url, Opts) {
 
+	  // Refresh the page
+	  if (Opts.refresh)
+	    return window.location.assign(url);
+
+
 	  Opts = Opts || {};
 	  url = Router.cleanFragment(url);
 
@@ -281,7 +286,7 @@
 
 	  if (!ret) {
 	    events.emit('route_not_found', url);
-	    // throw new Error('Route not found.');
+	    throw new Error('Route not found.');
 	  }
 
 	  // Force a path

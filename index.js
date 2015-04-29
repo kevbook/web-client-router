@@ -165,6 +165,11 @@ Router.gotoRoute = function(url, route, data, Opts) {
 
 Router.go = function(url, Opts) {
 
+  // Refresh the page
+  if (Opts.refresh)
+    return window.location.assign(url);
+
+
   Opts = Opts || {};
   url = Router.cleanFragment(url);
 
@@ -219,7 +224,7 @@ Router.go = function(url, Opts) {
 
   if (!ret) {
     events.emit('route_not_found', url);
-    // throw new Error('Route not found.');
+    throw new Error('Route not found.');
   }
 
   // Force a path
