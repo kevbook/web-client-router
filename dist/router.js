@@ -227,14 +227,14 @@
 
 	Router.go = function(url, Opts) {
 
+	  Opts = Opts || {};
+
 	  // Refresh the page
 	  if (Opts.refresh)
 	    return window.location.assign(url);
 
 
-	  Opts = Opts || {};
 	  url = Router.cleanFragment(url);
-
 
 	  for (var ret, i=0, len=routes.length; i<len; i++) {
 
