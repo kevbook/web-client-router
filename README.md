@@ -31,7 +31,7 @@ var router = Router({
     },
 
  	  handler: function(data) {
- 	   	// data.get , data.params , data.url , data.lastUrl
+ 	   	// data.get , data.params , data.url , data.lastUrl, data.qs
       console.log(data);
     }
   },
@@ -48,7 +48,7 @@ var router = Router({
     ],
 
  	  handler: function(data) {
- 	   // data.pre , data.params , data.url , data.lastUrl
+ 	   // data.pre , data.params , data.url , data.lastUrl, data.qs
       console.log(data);
     }
   },
@@ -61,7 +61,7 @@ var router = Router({
     get: '/service/data.json',
 
  	  handler: function(data) {
- 	    // data.get , data.params , data.url , data.lastUrl
+ 	    // data.get , data.params , data.url , data.lastUrl, data.qs
       console.log(data);
     }
   },
@@ -76,7 +76,7 @@ var router = Router({
 	  },
 
  	  handler: function(data) {
- 	   // data.get , data.params , data.url , data.lastUrl
+ 	   // data.get , data.params , data.url , data.lastUrl, data.qs
       console.log(data);
     }
   },
@@ -91,7 +91,7 @@ var router = Router({
 	  },
 
  	  handler: function(data) {
- 	   // data.get , data.params , data.url , data.lastUrl
+ 	   // data.get , data.params , data.url , data.lastUrl, data.qs
       console.log(data);
     }
   },
@@ -130,20 +130,32 @@ router.go('/new-url', [opts])
 
 ```js
 // You can also listen to events
-router.events.on('route_complete', function(url) {
-  console.log(url)
+router.events.on('route_start', function(route) {
+  console.log('route_start:', route)
+});
+
+router.events.on('route_complete', function(route) {
+  console.log('route_complete:', route)
+});
+
+router.events.on('pre_complete', function(preData) {
+  console.log('pre_complete:', preData)
+});
+
+router.events.on('get_complete', function(getData) {
+  console.log('get_complete:', getData)
 });
 
 router.events.on('route_matched', function(url) {
-  console.log(url)
+  console.log('route_matched:', url)
 });
 
 router.events.on('route_error', function(err) {
-  console.log(err)
+  console.log('route_error:', err)
 });
 
 router.events.on('route_not_found', function(url) {
-  console.log(url)
+  console.log('route_not_found:', url)
 });
 
 // You can also add a route later on

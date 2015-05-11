@@ -30,7 +30,7 @@ var router = Router({
       },
       function(route, next) {
         console.log('Route:', route);
-        return next(null);
+        return next(null, '2nd function man');
       }
     ]
   },
@@ -63,22 +63,33 @@ var router = Router({
 
 
 // Testing events
-router.events.on('route_complete', function() {
-  console.log('route_complete');
+router.events.on('route_start', function(route) {
+  console.log('route_start:', route)
+});
+
+router.events.on('route_complete', function(route) {
+  console.log('route_complete:', route)
+});
+
+router.events.on('pre_complete', function(preData) {
+  console.log('pre_complete:', preData)
+});
+
+router.events.on('get_complete', function(getData) {
+  console.log('get_complete:', getData)
 });
 
 router.events.on('route_matched', function(url) {
-  console.log('route_matched');
+  console.log('route_matched:', url)
 });
 
-router.events.on('route_error', function() {
-  console.log('route_error');
+router.events.on('route_error', function(err) {
+  console.log('route_error:', err)
 });
 
-router.events.on('route_not_found', function() {
-  console.log('route_not_found');
+router.events.on('route_not_found', function(url) {
+  console.log('route_not_found:', url)
 });
-
 
 window.r = router;
 router.start();

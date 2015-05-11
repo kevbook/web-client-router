@@ -76,7 +76,7 @@
 	      },
 	      function(route, next) {
 	        console.log('Route:', route);
-	        return next(null);
+	        return next(null, '2nd function man');
 	      }
 	    ]
 	  },
@@ -109,22 +109,33 @@
 
 
 	// Testing events
-	router.events.on('route_complete', function() {
-	  console.log('route_complete');
+	router.events.on('route_start', function(route) {
+	  console.log('route_start:', route)
+	});
+
+	router.events.on('route_complete', function(route) {
+	  console.log('route_complete:', route)
+	});
+
+	router.events.on('pre_complete', function(preData) {
+	  console.log('pre_complete:', preData)
+	});
+
+	router.events.on('get_complete', function(getData) {
+	  console.log('get_complete:', getData)
 	});
 
 	router.events.on('route_matched', function(url) {
-	  console.log('route_matched');
+	  console.log('route_matched:', url)
 	});
 
-	router.events.on('route_error', function() {
-	  console.log('route_error');
+	router.events.on('route_error', function(err) {
+	  console.log('route_error:', err)
 	});
 
-	router.events.on('route_not_found', function() {
-	  console.log('route_not_found');
+	router.events.on('route_not_found', function(url) {
+	  console.log('route_not_found:', url)
 	});
-
 
 	window.r = router;
 	router.start();
@@ -287,23 +298,24 @@
 
 	Router.gotoRoute = function(url, route, data, Opts) {
 
-	  if (route && route.title) utils.updateTitle(route.title);
-
 	  if (routerStarted) {
 	    window.history[Opts.replace
 	      ? 'replaceState'
 	      : 'pushState']({}, document.title, url);
 	  }
 
+	  if (route && route.title) utils.updateTitle(route.title);
+
 	  routerStarted = true;
 	  data.lastUrl = lastFragment;
 	  lastFragment = url;
+	  data.qs = utils.getQuerystring();
 
 	  // Cleaning up params
 	  delete data.params['undefined'];
 	  delete data.params['__cache'];
 
-	  events.emit('route_complete', url);
+	  events.emit('route_complete', data);
 	  if (route && route.handler) route.handler(data);
 	};
 
@@ -316,8 +328,9 @@
 	  if (Opts.refresh)
 	    return window.location.assign(url);
 
-
 	  url = Router.cleanFragment(url);
+	  events.emit('route_start', url);
+
 
 	  for (var ret, i=0, len=routes.length; i<len; i++) {
 
@@ -337,6 +350,7 @@
 	              }
 	              else {
 	                ret.get = get;
+	                events.emit('get_complete', get);
 	                Router.gotoRoute(url, routes[i], ret, Opts);
 	              }
 	          });
@@ -351,11 +365,13 @@
 	      if (routes[i].pre) {
 
 	        utils.pre(ret, routes[i].pre, function(err, pre) {
+
 	          if (err) {
 	            events.emit('route_error', err);
 	          }
 	          else {
 	            ret.pre = pre;
+	            events.emit('pre_complete', pre);
 	            processRoute();
 	          }
 	        });
@@ -425,7 +441,7 @@
 	    : url.concat('?_={__cache}');
 
 	  return url;
-	}
+	};
 
 	Utils.cacheBust = function(get) {
 
@@ -435,13 +451,11 @@
 	    get[i] = Utils.appendUrl(get[i]);
 
 	  return get;
-	}
-
+	};
 
 	Utils.updateTitle = function(title) {
 	  document.title = title;
 	};
-
 
 	Utils.pre = function(ret, fns, cb) {
 
@@ -449,7 +463,6 @@
 	    return fn(ret, next);
 	  }, cb);
 	};
-
 
 	Utils.get = function(xhrOpts, ret, fns, cb) {
 
@@ -462,7 +475,7 @@
 	    ret.params.__cache = new Date().getTime();
 	    opts.url = that.teml(fns[key], ret.params);
 
-	    console.log('GET %s', opts.url);
+	    console.log('GET Request %s', opts.url);
 
 	    xhr(opts, function(err, res) {
 
@@ -493,7 +506,6 @@
 	  });
 	};
 
-
 	/*
 	 * Usage: http://www.140byt.es/keywords/string
 	 * var hello = teml("Hello, {name}!", {name: 'k' })
@@ -506,9 +518,21 @@
 	  return s;
 	};
 
-
 	Utils.getQuerystring = function() {
-	  var qs = window.location.search;
+
+	  var QsArr = window.location.search
+	                    .toLowerCase()
+	                    .match(/[?&]?([^=]+)=([^&]*)/ig) || [];
+
+	  for (var qs={}, res, i=0, len=QsArr.length; i<len; i++) {
+
+	    res = /[?&]?([^=]+)=([^&]*)/i.exec(QsArr[i]);
+
+	    if (res && res.length)
+	      qs[ res[1]||''.trim() ] =  (res[2]||'').trim();
+	  }
+
+	  return qs;
 	};
 
 

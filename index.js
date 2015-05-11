@@ -142,23 +142,24 @@ Router.onPopstate = function(e) {
 
 Router.gotoRoute = function(url, route, data, Opts) {
 
-  if (route && route.title) utils.updateTitle(route.title);
-
   if (routerStarted) {
     window.history[Opts.replace
       ? 'replaceState'
       : 'pushState']({}, document.title, url);
   }
 
+  if (route && route.title) utils.updateTitle(route.title);
+
   routerStarted = true;
   data.lastUrl = lastFragment;
   lastFragment = url;
+  data.qs = utils.getQuerystring();
 
   // Cleaning up params
   delete data.params['undefined'];
   delete data.params['__cache'];
 
-  events.emit('route_complete', url);
+  events.emit('route_complete', data);
   if (route && route.handler) route.handler(data);
 };
 
@@ -171,8 +172,9 @@ Router.go = function(url, Opts) {
   if (Opts.refresh)
     return window.location.assign(url);
 
-
   url = Router.cleanFragment(url);
+  events.emit('route_start', url);
+
 
   for (var ret, i=0, len=routes.length; i<len; i++) {
 
@@ -192,6 +194,7 @@ Router.go = function(url, Opts) {
               }
               else {
                 ret.get = get;
+                events.emit('get_complete', get);
                 Router.gotoRoute(url, routes[i], ret, Opts);
               }
           });
@@ -206,11 +209,13 @@ Router.go = function(url, Opts) {
       if (routes[i].pre) {
 
         utils.pre(ret, routes[i].pre, function(err, pre) {
+
           if (err) {
             events.emit('route_error', err);
           }
           else {
             ret.pre = pre;
+            events.emit('pre_complete', pre);
             processRoute();
           }
         });
