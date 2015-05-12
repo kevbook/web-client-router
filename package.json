@@ -21,7 +21,6 @@
     "url": "https://github.com/kevbook/web-client-router/issues"
   },
   "dependencies": {
-    "isarray": "0.0.1",
     "kevbook.flow": "latest",
     "path-to-regexp": "^1.0.3",
     "tiny-emitter": "^1.0.0",

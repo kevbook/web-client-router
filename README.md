@@ -1,6 +1,7 @@
 # web-client-router
 Express style client router for single page web apps
 
+__NOTE: The intent is to only support IE9+__
 
 #### Usage
 Uses [ExpressJs](http://expressjs.com) style routing on the client side. See [Routing Path Match Rules](https://github.com/pillarjs/path-to-regexp)

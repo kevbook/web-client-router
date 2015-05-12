@@ -1,6 +1,5 @@
 
 var pathToRegexp = require('path-to-regexp'),
-  isArray = require('isarray'),
   utils = require('./lib/utils'),
   Emitter = require('tiny-emitter');
 
@@ -89,7 +88,7 @@ Router.addRoute = function(route) {
     // Handle variants of pre
     pre: typeof route.pre === 'function'
       ? [route.pre]
-      : isArray(route.pre) ? route.pre : null,
+      : Array.isArray(route.pre) ? route.pre : null,
 
     // @param {String} | {Object}
     get: utils.cacheBust( (typeof route.get === 'string')
