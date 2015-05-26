@@ -152,6 +152,9 @@ Router.gotoRoute = function(url, route, data, Opts) {
   routerStarted = true;
   data.lastUrl = lastFragment;
   lastFragment = url;
+
+  // Make data empty object if doesnt exist
+  data = data || {};
   data.qs = utils.getQuerystring();
 
   // Cleaning up params
