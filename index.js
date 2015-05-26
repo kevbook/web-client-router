@@ -141,7 +141,7 @@ Router.onPopstate = function(e) {
 
 Router.gotoRoute = function(url, route, data, Opts) {
 
-  if (routerStarted) {
+  if (routerStarted && lastFragment !== url) {
     window.history[Opts.replace
       ? 'replaceState'
       : 'pushState']({}, document.title, url);

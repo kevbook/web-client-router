@@ -48,7 +48,7 @@
 
 	console.log('Running tests.js');
 
-	var Router = __webpack_require__(2);
+	var Router = __webpack_require__(1);
 
 	var handler = function(data) {
 	  console.debug(data);
@@ -145,19 +145,9 @@
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = Array.isArray || function (arr) {
-	  return Object.prototype.toString.call(arr) == '[object Array]';
-	};
-
-
-/***/ },
-/* 2 */
-/***/ function(module, exports, __webpack_require__) {
-
 	
 	var pathToRegexp = __webpack_require__(5),
-	  isArray = __webpack_require__(1),
-	  utils = __webpack_require__(3),
+	  utils = __webpack_require__(2),
 	  Emitter = __webpack_require__(6);
 
 
@@ -245,7 +235,7 @@
 	    // Handle variants of pre
 	    pre: typeof route.pre === 'function'
 	      ? [route.pre]
-	      : isArray(route.pre) ? route.pre : null,
+	      : Array.isArray(route.pre) ? route.pre : null,
 
 	    // @param {String} | {Object}
 	    get: utils.cacheBust( (typeof route.get === 'string')
@@ -298,7 +288,7 @@
 
 	Router.gotoRoute = function(url, route, data, Opts) {
 
-	  if (routerStarted) {
+	  if (routerStarted && lastFragment !== url) {
 	    window.history[Opts.replace
 	      ? 'replaceState'
 	      : 'pushState']({}, document.title, url);
@@ -401,7 +391,7 @@
 
 
 /***/ },
-/* 3 */
+/* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -533,6 +523,15 @@
 	  }
 
 	  return qs;
+	};
+
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = Array.isArray || function (arr) {
+	  return Object.prototype.toString.call(arr) == '[object Array]';
 	};
 
 
@@ -734,7 +733,7 @@
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArray = __webpack_require__(1);
+	var isArray = __webpack_require__(3);
 
 	/**
 	 * Expose `pathToRegexp`.
