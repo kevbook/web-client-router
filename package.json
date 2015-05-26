@@ -1,6 +1,6 @@
 {
   "name": "web-client-router",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Express style client router for single page web apps",
   "homepage": "https://github.com/kevbook/web-client-router",
   "keywords": [

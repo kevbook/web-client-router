@@ -299,6 +299,9 @@
 	  routerStarted = true;
 	  data.lastUrl = lastFragment;
 	  lastFragment = url;
+
+	  // Make data empty object if doesnt exist
+	  data = data || {};
 	  data.qs = utils.getQuerystring();
 
 	  // Cleaning up params
@@ -309,7 +312,14 @@
 	  if (route && route.handler) route.handler(data);
 	};
 
-
+	/**
+	 * @ Opts {Object}
+	 *   - refresh (refresh the browser window)
+	 *   - replace (replace state instead of push)
+	 *   - skip (skip all middleware and routing,
+	 *           just push state, so browswers url is changed).
+	 *           Can be used in conjunction with "replace"
+	**/
 	Router.go = function(url, Opts) {
 
 	  Opts = Opts || {};
@@ -318,9 +328,23 @@
 	  if (Opts.refresh)
 	    return window.location.assign(url);
 
-	  url = Router.cleanFragment(url);
-	  events.emit('route_start', url);
 
+	  url = Router.cleanFragment(url);
+
+	  // Skip the middleware and routing
+	  if (Opts.skip) {
+
+	    window.history[Opts.replace
+	      ? 'replaceState'
+	      : 'pushState']({}, document.title, url);
+
+	    lastFragment = url;
+	    return;
+	  }
+
+
+	  // Only emit when actually routing
+	  events.emit('route_start', url);
 
 	  for (var ret, i=0, len=routes.length; i<len; i++) {
 

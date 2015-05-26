@@ -124,6 +124,8 @@ router.start();
 // Go to a path
 // @opts {Object} - optional
 // opts.replace = true --> to replace history state instead of push state
+// opts.refresh = true --> to refresh the browser window instead of using client routing
+// opts.skip = true --> skip all middleware and routing, just push state, so browswers url is changed. Can be used in conjunction with opts.replace
 router.go('/new-url', [opts])
 ```
 
