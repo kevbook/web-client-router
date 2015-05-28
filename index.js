@@ -11,6 +11,7 @@ var routerStarted = false;
 var events = new Emitter();
 var routes = [];
 var lastFragment = null;
+var lastParams = {};
 var opts;
 
 
@@ -160,6 +161,10 @@ Router.gotoRoute = function(url, route, data, Opts) {
   // Cleaning up params
   delete data.params['undefined'];
   delete data.params['__cache'];
+
+  // Keep the last params
+  data.lastParams = lastParams;
+  lastParams = data.params;
 
   events.emit('route_complete', data);
   if (route && route.handler) route.handler(data);
