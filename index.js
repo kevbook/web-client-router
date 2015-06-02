@@ -60,8 +60,8 @@ Router.start = function() {
   // If the server has already rendered the page,
   // and you don't want the initial route to be triggered
   (opts.silent !== true)
-    ? Router.go(window.location.pathname || '')
-    : Router.gotoRoute(window.location.pathname || '');
+    ? Router.go(window.location.pathname || '', { firstTime: true })
+    : Router.go(window.location.pathname || '', { skip: true, replace: true });
 
   return this;
 };
@@ -142,7 +142,11 @@ Router.onPopstate = function(e) {
 
 Router.gotoRoute = function(url, route, data, Opts) {
 
-  if (routerStarted && lastFragment !== url) {
+  if (Opts.firstTime) {
+    window.history['replaceState']({}, document.title, url);
+  }
+
+  else if (routerStarted && lastFragment !== url) {
     window.history[Opts.replace
       ? 'replaceState'
       : 'pushState']({}, document.title, url);
@@ -196,6 +200,7 @@ Router.go = function(url, Opts) {
       ? 'replaceState'
       : 'pushState']({}, document.title, url);
 
+    routerStarted =  true;
     lastFragment = url;
     return;
   }
@@ -259,14 +264,4 @@ Router.go = function(url, Opts) {
     events.emit('route_not_found', url);
     throw new Error('Route not found.');
   }
-
-  // Force a path
-  // if (opts.force) {
-  //   window.history[opts.replace ? 'replaceState' : 'pushState']({}, document.title, url);
-  // }
-  //   return Router.location.assign(url);
-  // }
-  // if (options.trigger) return Router.loadUrl(fragment);
-  // if (current === path && opts.force === false)
-  //   return false;
 };

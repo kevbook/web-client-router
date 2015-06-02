@@ -15,6 +15,7 @@ var router = Router({
     title: 'Root Page',
     handler: handler,
     pre: function(route, next) {
+      console.log('In Pre:', route);
       return next(null, 'some result');
     },
     get: '/'
@@ -40,6 +41,16 @@ var router = Router({
     handler: handler
   },
 
+  '/:cool': {
+    title: 'Root Page',
+    handler: handler,
+    pre: function(route, next) {
+      console.log('In Pre:', route);
+      return next(null, 'some result');
+    },
+    get: '/'
+  },
+
   '/abc/:a/:b': {
     title: 'Abc/Super/a/b Page',
     handler: handler,
@@ -57,7 +68,7 @@ var router = Router({
     headers: {
       'Content-Tyoe': 'application/json'
     }
-  }
+  },
   // silent: true
 });
 
