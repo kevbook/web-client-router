@@ -201,8 +201,20 @@ Router.go = function(url, Opts) {
       ? 'replaceState'
       : 'pushState']({}, document.title, url);
 
+
+    // Match the route for params
+    for (var ret, i=0, len=routes.length; i<len; i++) {
+      ret = Router.matchPath(url, routes[i]);
+      if (ret) break;
+    }
+
+    ret = ret || { params: {} };
+    delete ret.params['undefined'];
+
+    // Update things for history
     routerStarted =  true;
     lastFragment = url;
+    lastParams = ret.params;
     return;
   }
 
