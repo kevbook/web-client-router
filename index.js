@@ -181,6 +181,7 @@ Router.gotoRoute = function(url, route, data, Opts) {
  *   - skip (skip all middleware and routing,
  *           just push state, so browswers url is changed).
  *           Can be used in conjunction with "replace"
+ *   - force (force router started)
 **/
 Router.go = function(url, Opts) {
 
@@ -204,6 +205,9 @@ Router.go = function(url, Opts) {
     lastFragment = url;
     return;
   }
+
+  if (Opts.force)
+    routerStarted = true;
 
 
   // Only emit when actually routing
