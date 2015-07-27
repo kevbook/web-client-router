@@ -260,7 +260,6 @@ Router.go = function(url, Opts) {
     delete ret.params['undefined'];
 
     // Update things for history
-    routerStarted =  true;
     lastFragment = url;
     lastParams = ret.params;
     return;
