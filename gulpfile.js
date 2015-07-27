@@ -37,6 +37,7 @@ gulp.task('webserver', function() {
 
   return gulp.src('./dist')
     .pipe(webserver({
+      fallback: 'index.html',
       open: true,
       port: 5001
     }));

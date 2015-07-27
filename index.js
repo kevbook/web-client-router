@@ -30,6 +30,11 @@ function Router(routesMap, Opts) {
   // Init things
   opts = Opts || {};
 
+  // Clean up root path
+  if (opts.root) {
+    opts.root = Router.cleanFragment(opts.root);
+    opts.rootReg = new RegExp('^'+opts.root, 'ig');
+  }
 
   // Add routes
   if (typeof routesMap === 'object') {
@@ -60,8 +65,8 @@ Router.start = function() {
   // If the server has already rendered the page,
   // and you don't want the initial route to be triggered
   (opts.silent !== true)
-    ? Router.go(window.location.pathname || '', { firstTime: true })
-    : Router.go(window.location.pathname || '', { skip: true, replace: true });
+    ? Router.go(window.location.pathname, { _firstTime: true })
+    : Router.go(window.location.pathname, { _firstTime: true, skip: true, replace: true });
 
   return this;
 };
@@ -117,6 +122,11 @@ Router.cleanFragment = function(fragment) {
   // Strip a leading hash/slash and trailing space.
   fragment = fragment.replace(/^[#\/]|\s+$/g, '');
 
+  // Strip a trailing slash
+  fragment = fragment.substr(-1) === '/'
+    ? fragment.slice(0,-1)
+    : fragment;
+
   return '/'+fragment;
 };
 
@@ -135,21 +145,28 @@ Router.matchPath = function(url, route) {
 
 
 Router.onPopstate = function(e) {
-  routerStarted = false;
-  Router.go(window.location.pathname || '');
+  // routerStarted = false;
+  var loc = window.location.pathname + window.location.search;
+  Router.go(loc, { _firstTime: true });
+};
+
+
+Router.notFound = function(url, reason) {
+  events.emit('route_not_found', url);
+  throw new Error('Route not found.' + ' '.concat(reason));
 };
 
 
 Router.gotoRoute = function(url, route, data, Opts) {
 
-  if (Opts.firstTime) {
-    window.history['replaceState']({}, document.title, url);
+  if (Opts._firstTime) {
+    window.history['replaceState']({}, document.title, Opts.fullUrl + window.location.search);
   }
 
-  else if (routerStarted && lastFragment !== url) {
+  else if (lastFragment !== url) {
     window.history[Opts.replace
       ? 'replaceState'
-      : 'pushState']({}, document.title, url);
+      : 'pushState']({}, document.title, Opts.fullUrl + window.location.search);
   }
 
   if (route && route.title) utils.updateTitle(route.title);
@@ -157,10 +174,9 @@ Router.gotoRoute = function(url, route, data, Opts) {
   // Make data empty object if doesnt exist
   data = data || {};
 
-  routerStarted = true;
   data.lastUrl = lastFragment;
   lastFragment = url;
-  data.qs = utils.getQuerystring();
+  data.qs = utils.getQuerystring(Opts._qs);
 
   // Cleaning up params
   delete data.params['undefined'];
@@ -181,25 +197,58 @@ Router.gotoRoute = function(url, route, data, Opts) {
  *   - skip (skip all middleware and routing,
  *           just push state, so browswers url is changed).
  *           Can be used in conjunction with "replace"
- *   - force (force router started)
 **/
 Router.go = function(url, Opts) {
 
+  // Init things
   Opts = Opts || {};
+  routerStarted = true;
+
+
+  // Strip out query-string
+  if (Opts._firstTime) {
+    Opts._qs = window.location.search;
+  }
+  else {
+    var index = url.indexOf('?');
+    if (index !== -1) {
+      Opts._qs = url.substring(index);
+      url = url.substring(0,index);
+    }
+  }
+
+  // Clean up the url
+  url = Router.cleanFragment(url);
+
 
   // Refresh the page
   if (Opts.refresh)
     return window.location.assign(url);
 
 
-  url = Router.cleanFragment(url);
+  // Build url and fullUrl
+  if (opts.root) {
+
+    if (Opts._firstTime) {
+      Opts.fullUrl = url;
+      url = Router.cleanFragment( url.replace(opts.rootReg, '') );
+    }
+
+    else {
+      Opts.fullUrl = opts.root + url;
+    }
+
+  } else {
+    Opts.fullUrl = url;
+  }
+
 
   // Skip the middleware and routing
   if (Opts.skip) {
 
     window.history[Opts.replace
       ? 'replaceState'
-      : 'pushState']({}, document.title, url);
+      : 'pushState']({}, document.title, Opts.fullUrl + window.location.search);
 
 
     // Match the route for params
@@ -218,12 +267,16 @@ Router.go = function(url, Opts) {
     return;
   }
 
-  if (Opts.force)
-    routerStarted = true;
-
 
   // Only emit when actually routing
   events.emit('route_start', url);
+
+  // Lets check for an edge case:
+  // Root and first time, and there is no root
+  if (opts.root && Opts._firstTime &&
+      opts.rootReg.test(Opts.fullUrl) === false) {
+     Router.notFound(url, 'Root did not match.');
+  }
 
   for (var ret, i=0, len=routes.length; i<len; i++) {
 
@@ -276,8 +329,5 @@ Router.go = function(url, Opts) {
     }
   }
 
-  if (!ret) {
-    events.emit('route_not_found', url);
-    throw new Error('Route not found.');
-  }
+  if (!ret) Router.notFound(url);
 };

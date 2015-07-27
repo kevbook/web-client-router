@@ -5,6 +5,7 @@ console.log('Running tests.js');
 var Router = require('..');
 
 var handler = function(data) {
+  console.log('-- In Hander --');
   console.debug(data);
   var el = document.getElementById('route');
   if (el) el.textContent = data.url;
@@ -69,7 +70,8 @@ var router = Router({
       'Content-Tyoe': 'application/json'
     }
   },
-  // silent: true
+  // silent: true,
+  // root: 'public/search'
 });
 
 
@@ -102,5 +104,5 @@ router.events.on('route_not_found', function(url) {
   console.log('route_not_found:', url)
 });
 
-window.r = router;
+window.r = window.router = window.Router = router;
 router.start();

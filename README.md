@@ -115,7 +115,13 @@ var router = Router({
 
   // If the server has already rendered the page,
   // and you don't want the initial route to be triggered, pass silent: true.
-  silent: true
+  silent: true,
+
+  // If your app is not being served from the root url / of your domain
+  root: '/public/search'
+
+  // Sometimes you want root for only certain enviornments, you can maybe do something like this:
+  // root: env ? '/public/search' : null
 });
 
 // Start the router
