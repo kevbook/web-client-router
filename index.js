@@ -62,6 +62,8 @@ function Router(routesMap, Opts) {
 
 Router.start = function() {
 
+  routerStarted = true;
+
   // If the server has already rendered the page,
   // and you don't want the initial route to be triggered
   (opts.silent !== true)
@@ -201,7 +203,6 @@ Router.go = function(url, Opts) {
 
   // Init things
   Opts = Opts || {};
-  routerStarted = true;
 
 
   // Strip out query-string
