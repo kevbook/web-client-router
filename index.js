@@ -176,7 +176,6 @@ Router.gotoRoute = function(url, route, data, Opts) {
 
   data.lastUrl = lastFragment;
   lastFragment = url;
-  data.qs = utils.getQuerystring(Opts._qs);
 
   // Cleaning up params
   delete data.params['undefined'];
@@ -283,8 +282,10 @@ Router.go = function(url, Opts) {
     ret = Router.matchPath(url, routes[i]);
 
     if (ret) {
-
       events.emit('route_matched', url);
+
+      // Parse query-string
+      ret.qs = utils.getQuerystring(Opts._qs);
 
       var processRoute = function() {
         // Get request
