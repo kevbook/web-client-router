@@ -12,6 +12,7 @@ var events = new Emitter();
 var routes = [];
 var lastFragment = null;
 var lastParams = {};
+var lastQs = {};
 var opts;
 
 
@@ -146,7 +147,7 @@ Router.matchPath = function(url, route) {
 
 Router.onPopstate = function(e) {
   // routerStarted = false;
-  var loc = window.location.pathname + window.location.search;
+  var loc = window.location.pathname;
   Router.go(loc, { _firstTime: true });
 };
 
@@ -169,6 +170,12 @@ Router.gotoRoute = function(url, route, data, Opts) {
       : 'pushState']({}, document.title, Opts.fullUrl.concat(Opts._qs || ''));
   }
 
+  else if (lastFragment === url && !utils.areEqualShallow(lastQs, utils.getQuerystring(Opts._qs))) {
+    window.history[Opts.replace
+      ? 'replaceState'
+      : 'pushState']({}, document.title, Opts.fullUrl.concat(Opts._qs || ''));
+  }
+
   if (route && route.title) utils.updateTitle(route.title);
 
   // Make data empty object if doesnt exist
@@ -185,6 +192,7 @@ Router.gotoRoute = function(url, route, data, Opts) {
   // Keep the last params
   data.lastParams = lastParams;
   lastParams = data.params;
+  lastQs = utils.getQuerystring(Opts._qs);
 
   events.emit('route_complete', data);
   if (route && route.handler) route.handler(data);
