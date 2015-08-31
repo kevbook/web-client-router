@@ -166,7 +166,7 @@ Router.gotoRoute = function(url, route, data, Opts) {
   else if (lastFragment !== url) {
     window.history[Opts.replace
       ? 'replaceState'
-      : 'pushState']({}, document.title, Opts.fullUrl + Opts._qs.concat(Opts._qs || ''));
+      : 'pushState']({}, document.title, Opts.fullUrl.concat(Opts._qs || ''));
   }
 
   if (route && route.title) utils.updateTitle(route.title);
