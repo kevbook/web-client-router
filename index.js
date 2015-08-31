@@ -248,7 +248,7 @@ Router.go = function(url, Opts) {
 
     window.history[Opts.replace
       ? 'replaceState'
-      : 'pushState']({}, document.title, Opts.fullUrl + window.location.search);
+      : 'pushState']({}, document.title, Opts.fullUrl.concat(Opts._qs || ''));
 
 
     // Match the route for params
