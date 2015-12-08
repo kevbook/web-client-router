@@ -93,6 +93,7 @@ Router.addRoute = function(route) {
     params: params,
     handler: route.handler,
     title: route.title || null,
+    name: route.name || null,
 
     // Handle variants of pre
     pre: typeof route.pre === 'function'
@@ -194,6 +195,10 @@ Router.gotoRoute = function(url, route, data, Opts) {
   data.lastParams = lastParams;
   lastParams = data.params;
   lastQs = utils.getQuerystring(Opts._qs);
+
+  // Keep other
+  data.title = route.title
+  data.name = route.name
 
   events.emit('route_complete', data);
   if (route && route.handler) route.handler(data);
