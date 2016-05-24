@@ -1,6 +1,6 @@
 {
   "name": "web-client-router",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Express style client router for single page web apps",
   "homepage": "https://github.com/kevbook/web-client-router",
   "keywords": [
@@ -22,8 +22,8 @@
   },
   "dependencies": {
     "kevbook.flow": "latest",
-    "path-to-regexp": "^1.0.3",
-    "tiny-emitter": "^1.0.0",
+    "path-to-regexp": "^1.5.0",
+    "tiny-emitter": "^1.0.2",
     "xhr": "latest"
   },
   "devDependencies": {
@@ -32,9 +32,9 @@
     "error-parser": "latest",
     "gulp": "latest",
     "gulp-autopolyfiller": "latest",
-    "gulp-jsvalidate": "^2.0.0",
+    "gulp-jsvalidate": "^2.1.0",
     "gulp-uglify": "latest",
-    "gulp-webserver": "^0.9.0",
+    "gulp-webserver": "^0.9.1",
     "merge": "latest",
     "strip-loader": "latest",
     "webpack": "latest",
