@@ -12,6 +12,7 @@ var events = new Emitter();
 var routes = [];
 var lastFragment = null;
 var lastParams = {};
+var lastQs = {};
 var opts;
 
 
@@ -92,6 +93,7 @@ Router.addRoute = function(route) {
     params: params,
     handler: route.handler,
     title: route.title || null,
+    name: route.name || null,
 
     // Handle variants of pre
     pre: typeof route.pre === 'function'
@@ -148,7 +150,7 @@ Router.matchPath = function(url, route) {
 
 Router.onPopstate = function(e) {
   // routerStarted = false;
-  var loc = window.location.pathname + window.location.search;
+  var loc = window.location.pathname;
   Router.go(loc, { _firstTime: true });
 };
 
@@ -162,13 +164,19 @@ Router.notFound = function(url, reason) {
 Router.gotoRoute = function(url, route, data, Opts) {
 
   if (Opts._firstTime) {
-    window.history['replaceState']({}, document.title, Opts.fullUrl + window.location.search);
+    window.history['replaceState']({}, document.title, Opts.fullUrl.concat(Opts._qs || ''));
   }
 
   else if (lastFragment !== url) {
     window.history[Opts.replace
       ? 'replaceState'
-      : 'pushState']({}, document.title, Opts.fullUrl + window.location.search);
+      : 'pushState']({}, document.title, Opts.fullUrl.concat(Opts._qs || ''));
+  }
+
+  else if (lastFragment === url && !utils.areEqualShallow(lastQs, utils.getQuerystring(Opts._qs))) {
+    window.history[Opts.replace
+      ? 'replaceState'
+      : 'pushState']({}, document.title, Opts.fullUrl.concat(Opts._qs || ''));
   }
 
   if (route && route.title) utils.updateTitle(route.title);
@@ -186,6 +194,11 @@ Router.gotoRoute = function(url, route, data, Opts) {
   // Keep the last params
   data.lastParams = lastParams;
   lastParams = data.params;
+  lastQs = utils.getQuerystring(Opts._qs);
+
+  // Keep other
+  data.title = route.title
+  data.name = route.name
 
   events.emit('route_complete', data);
   if (route && route.handler) route.handler(data);
@@ -248,7 +261,7 @@ Router.go = function(url, Opts) {
 
     window.history[Opts.replace
       ? 'replaceState'
-      : 'pushState']({}, document.title, Opts.fullUrl + window.location.search);
+      : 'pushState']({}, document.title, Opts.fullUrl.concat(Opts._qs || ''));
 
 
     // Match the route for params
