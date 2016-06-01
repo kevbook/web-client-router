@@ -180,9 +180,9 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var pathToRegexp = __webpack_require__(10),
+	var pathToRegexp = __webpack_require__(5),
 	  utils = __webpack_require__(3),
-	  Emitter = __webpack_require__(11);
+	  Emitter = __webpack_require__(7);
 
 
 	module.exports = Router;
@@ -466,7 +466,9 @@
 
 	  // Lets check for an edge case:
 	  // Root and first time, and there is no root
-	  if (opts.root && Opts._firstTime &&
+	  if (opts.ignoreRootMatch !== true &&
+	      opts.root &&
+	      Opts._firstTime &&
 	      opts.rootReg.test(Opts.fullUrl) === false) {
 	     Router.notFound(url, 'Root did not match.');
 	  }
@@ -534,8 +536,8 @@
 
 	
 	//,
-	var flow = __webpack_require__(7),
-	  xhr = __webpack_require__(13);
+	var flow = __webpack_require__(4),
+	  xhr = __webpack_require__(8);
 
 
 	module.exports = Utils;
@@ -682,83 +684,6 @@
 
 /***/ },
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var isFunction = __webpack_require__(1)
-
-	module.exports = forEach
-
-	var toString = Object.prototype.toString
-	var hasOwnProperty = Object.prototype.hasOwnProperty
-
-	function forEach(list, iterator, context) {
-	    if (!isFunction(iterator)) {
-	        throw new TypeError('iterator must be a function')
-	    }
-
-	    if (arguments.length < 3) {
-	        context = this
-	    }
-	    
-	    if (toString.call(list) === '[object Array]')
-	        forEachArray(list, iterator, context)
-	    else if (typeof list === 'string')
-	        forEachString(list, iterator, context)
-	    else
-	        forEachObject(list, iterator, context)
-	}
-
-	function forEachArray(array, iterator, context) {
-	    for (var i = 0, len = array.length; i < len; i++) {
-	        if (hasOwnProperty.call(array, i)) {
-	            iterator.call(context, array[i], i, array)
-	        }
-	    }
-	}
-
-	function forEachString(string, iterator, context) {
-	    for (var i = 0, len = string.length; i < len; i++) {
-	        // no such thing as a sparse string.
-	        iterator.call(context, string.charAt(i), i, string)
-	    }
-	}
-
-	function forEachObject(object, iterator, context) {
-	    for (var k in object) {
-	        if (hasOwnProperty.call(object, k)) {
-	            iterator.call(context, object[k], k, object)
-	        }
-	    }
-	}
-
-
-/***/ },
-/* 5 */
-/***/ function(module, exports) {
-
-	/* WEBPACK VAR INJECTION */(function(global) {if (typeof window !== "undefined") {
-	    module.exports = window;
-	} else if (typeof global !== "undefined") {
-	    module.exports = global;
-	} else if (typeof self !== "undefined"){
-	    module.exports = self;
-	} else {
-	    module.exports = {};
-	}
-
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 6 */
-/***/ function(module, exports) {
-
-	module.exports = Array.isArray || function (arr) {
-	  return Object.prototype.toString.call(arr) == '[object Array]';
-	};
-
-
-/***/ },
-/* 7 */
 /***/ function(module, exports) {
 
 	
@@ -952,68 +877,7 @@
 
 
 /***/ },
-/* 8 */
-/***/ function(module, exports) {
-
-	module.exports = once
-
-	once.proto = once(function () {
-	  Object.defineProperty(Function.prototype, 'once', {
-	    value: function () {
-	      return once(this)
-	    },
-	    configurable: true
-	  })
-	})
-
-	function once (fn) {
-	  var called = false
-	  return function () {
-	    if (called) return
-	    called = true
-	    return fn.apply(this, arguments)
-	  }
-	}
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var trim = __webpack_require__(12)
-	  , forEach = __webpack_require__(4)
-	  , isArray = function(arg) {
-	      return Object.prototype.toString.call(arg) === '[object Array]';
-	    }
-
-	module.exports = function (headers) {
-	  if (!headers)
-	    return {}
-
-	  var result = {}
-
-	  forEach(
-	      trim(headers).split('\n')
-	    , function (row) {
-	        var index = row.indexOf(':')
-	          , key = trim(row.slice(0, index)).toLowerCase()
-	          , value = trim(row.slice(index + 1))
-
-	        if (typeof(result[key]) === 'undefined') {
-	          result[key] = value
-	        } else if (isArray(result[key])) {
-	          result[key].push(value)
-	        } else {
-	          result[key] = [ result[key], value ]
-	        }
-	      }
-	  )
-
-	  return result
-	}
-
-/***/ },
-/* 10 */
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var isarray = __webpack_require__(6)
@@ -1048,8 +912,8 @@
 	/**
 	 * Parse a string for the raw tokens.
 	 *
-	 * @param  {String} str
-	 * @return {Array}
+	 * @param  {string} str
+	 * @return {!Array}
 	 */
 	function parse (str) {
 	  var tokens = []
@@ -1071,22 +935,24 @@
 	      continue
 	    }
 
+	    var next = str[index]
+	    var prefix = res[2]
+	    var name = res[3]
+	    var capture = res[4]
+	    var group = res[5]
+	    var modifier = res[6]
+	    var asterisk = res[7]
+
 	    // Push the current path onto the tokens.
 	    if (path) {
 	      tokens.push(path)
 	      path = ''
 	    }
 
-	    var prefix = res[2]
-	    var name = res[3]
-	    var capture = res[4]
-	    var group = res[5]
-	    var suffix = res[6]
-	    var asterisk = res[7]
-
-	    var repeat = suffix === '+' || suffix === '*'
-	    var optional = suffix === '?' || suffix === '*'
-	    var delimiter = prefix || '/'
+	    var partial = prefix != null && next != null && next !== prefix
+	    var repeat = modifier === '+' || modifier === '*'
+	    var optional = modifier === '?' || modifier === '*'
+	    var delimiter = res[2] || '/'
 	    var pattern = capture || group || (asterisk ? '.*' : '[^' + delimiter + ']+?')
 
 	    tokens.push({
@@ -1095,6 +961,8 @@
 	      delimiter: delimiter,
 	      optional: optional,
 	      repeat: repeat,
+	      partial: partial,
+	      asterisk: !!asterisk,
 	      pattern: escapeGroup(pattern)
 	    })
 	  }
@@ -1115,11 +983,35 @@
 	/**
 	 * Compile a string to a template function for the path.
 	 *
-	 * @param  {String}   str
-	 * @return {Function}
+	 * @param  {string}             str
+	 * @return {!function(Object=, Object=)}
 	 */
 	function compile (str) {
 	  return tokensToFunction(parse(str))
+	}
+
+	/**
+	 * Prettier encoding of URI path segments.
+	 *
+	 * @param  {string}
+	 * @return {string}
+	 */
+	function encodeURIComponentPretty (str) {
+	  return encodeURI(str).replace(/[\/?#]/g, function (c) {
+	    return '%' + c.charCodeAt(0).toString(16).toUpperCase()
+	  })
+	}
+
+	/**
+	 * Encode the asterisk parameter. Similar to `pretty`, but allows slashes.
+	 *
+	 * @param  {string}
+	 * @return {string}
+	 */
+	function encodeAsterisk (str) {
+	  return encodeURI(str).replace(/[?#]/g, function (c) {
+	    return '%' + c.charCodeAt(0).toString(16).toUpperCase()
+	  })
 	}
 
 	/**
@@ -1132,13 +1024,15 @@
 	  // Compile all the patterns before compilation.
 	  for (var i = 0; i < tokens.length; i++) {
 	    if (typeof tokens[i] === 'object') {
-	      matches[i] = new RegExp('^' + tokens[i].pattern + '$')
+	      matches[i] = new RegExp('^(?:' + tokens[i].pattern + ')$')
 	    }
 	  }
 
-	  return function (obj) {
+	  return function (obj, opts) {
 	    var path = ''
 	    var data = obj || {}
+	    var options = opts || {}
+	    var encode = options.pretty ? encodeURIComponentPretty : encodeURIComponent
 
 	    for (var i = 0; i < tokens.length; i++) {
 	      var token = tokens[i]
@@ -1154,6 +1048,11 @@
 
 	      if (value == null) {
 	        if (token.optional) {
+	          // Prepend partial segment prefixes.
+	          if (token.partial) {
+	            path += token.prefix
+	          }
+
 	          continue
 	        } else {
 	          throw new TypeError('Expected "' + token.name + '" to be defined')
@@ -1162,7 +1061,7 @@
 
 	      if (isarray(value)) {
 	        if (!token.repeat) {
-	          throw new TypeError('Expected "' + token.name + '" to not repeat, but received "' + value + '"')
+	          throw new TypeError('Expected "' + token.name + '" to not repeat, but received `' + JSON.stringify(value) + '`')
 	        }
 
 	        if (value.length === 0) {
@@ -1174,10 +1073,10 @@
 	        }
 
 	        for (var j = 0; j < value.length; j++) {
-	          segment = encodeURIComponent(value[j])
+	          segment = encode(value[j])
 
 	          if (!matches[i].test(segment)) {
-	            throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '", but received "' + segment + '"')
+	            throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '", but received `' + JSON.stringify(segment) + '`')
 	          }
 
 	          path += (j === 0 ? token.prefix : token.delimiter) + segment
@@ -1186,7 +1085,7 @@
 	        continue
 	      }
 
-	      segment = encodeURIComponent(value)
+	      segment = token.asterisk ? encodeAsterisk(value) : encode(value)
 
 	      if (!matches[i].test(segment)) {
 	        throw new TypeError('Expected "' + token.name + '" to match "' + token.pattern + '", but received "' + segment + '"')
@@ -1202,8 +1101,8 @@
 	/**
 	 * Escape a regular expression string.
 	 *
-	 * @param  {String} str
-	 * @return {String}
+	 * @param  {string} str
+	 * @return {string}
 	 */
 	function escapeString (str) {
 	  return str.replace(/([.+*?=^!:${}()[\]|\/])/g, '\\$1')
@@ -1212,8 +1111,8 @@
 	/**
 	 * Escape the capturing group by escaping special characters and meaning.
 	 *
-	 * @param  {String} group
-	 * @return {String}
+	 * @param  {string} group
+	 * @return {string}
 	 */
 	function escapeGroup (group) {
 	  return group.replace(/([=!:$\/()])/g, '\\$1')
@@ -1222,9 +1121,9 @@
 	/**
 	 * Attach the keys as a property of the regexp.
 	 *
-	 * @param  {RegExp} re
-	 * @param  {Array}  keys
-	 * @return {RegExp}
+	 * @param  {!RegExp} re
+	 * @param  {Array}   keys
+	 * @return {!RegExp}
 	 */
 	function attachKeys (re, keys) {
 	  re.keys = keys
@@ -1235,7 +1134,7 @@
 	 * Get the flags for a regexp from the options.
 	 *
 	 * @param  {Object} options
-	 * @return {String}
+	 * @return {string}
 	 */
 	function flags (options) {
 	  return options.sensitive ? '' : 'i'
@@ -1244,9 +1143,9 @@
 	/**
 	 * Pull out keys from a regexp.
 	 *
-	 * @param  {RegExp} path
-	 * @param  {Array}  keys
-	 * @return {RegExp}
+	 * @param  {!RegExp} path
+	 * @param  {!Array}  keys
+	 * @return {!RegExp}
 	 */
 	function regexpToRegexp (path, keys) {
 	  // Use a negative lookahead to match only capturing groups.
@@ -1260,6 +1159,8 @@
 	        delimiter: null,
 	        optional: false,
 	        repeat: false,
+	        partial: false,
+	        asterisk: false,
 	        pattern: null
 	      })
 	    }
@@ -1271,10 +1172,10 @@
 	/**
 	 * Transform an array into a regexp.
 	 *
-	 * @param  {Array}  path
-	 * @param  {Array}  keys
-	 * @param  {Object} options
-	 * @return {RegExp}
+	 * @param  {!Array}  path
+	 * @param  {Array}   keys
+	 * @param  {!Object} options
+	 * @return {!RegExp}
 	 */
 	function arrayToRegexp (path, keys, options) {
 	  var parts = []
@@ -1291,10 +1192,10 @@
 	/**
 	 * Create a path regexp from string input.
 	 *
-	 * @param  {String} path
-	 * @param  {Array}  keys
-	 * @param  {Object} options
-	 * @return {RegExp}
+	 * @param  {string}  path
+	 * @param  {!Array}  keys
+	 * @param  {!Object} options
+	 * @return {!RegExp}
 	 */
 	function stringToRegexp (path, keys, options) {
 	  var tokens = parse(path)
@@ -1313,10 +1214,9 @@
 	/**
 	 * Expose a function for taking tokens and returning a RegExp.
 	 *
-	 * @param  {Array}  tokens
-	 * @param  {Array}  keys
-	 * @param  {Object} options
-	 * @return {RegExp}
+	 * @param  {!Array}  tokens
+	 * @param  {Object=} options
+	 * @return {!RegExp}
 	 */
 	function tokensToRegExp (tokens, options) {
 	  options = options || {}
@@ -1335,17 +1235,17 @@
 	      route += escapeString(token)
 	    } else {
 	      var prefix = escapeString(token.prefix)
-	      var capture = token.pattern
+	      var capture = '(?:' + token.pattern + ')'
 
 	      if (token.repeat) {
 	        capture += '(?:' + prefix + capture + ')*'
 	      }
 
 	      if (token.optional) {
-	        if (prefix) {
+	        if (!token.partial) {
 	          capture = '(?:' + prefix + '(' + capture + '))?'
 	        } else {
-	          capture = '(' + capture + ')?'
+	          capture = prefix + '(' + capture + ')?'
 	        }
 	      } else {
 	        capture = prefix + '(' + capture + ')'
@@ -1381,35 +1281,44 @@
 	 * placeholder key descriptions. For example, using `/user/:id`, `keys` will
 	 * contain `[{ name: 'id', delimiter: '/', optional: false, repeat: false }]`.
 	 *
-	 * @param  {(String|RegExp|Array)} path
-	 * @param  {Array}                 [keys]
-	 * @param  {Object}                [options]
-	 * @return {RegExp}
+	 * @param  {(string|RegExp|Array)} path
+	 * @param  {(Array|Object)=}       keys
+	 * @param  {Object=}               options
+	 * @return {!RegExp}
 	 */
 	function pathToRegexp (path, keys, options) {
 	  keys = keys || []
 
 	  if (!isarray(keys)) {
-	    options = keys
+	    options = /** @type {!Object} */ (keys)
 	    keys = []
 	  } else if (!options) {
 	    options = {}
 	  }
 
 	  if (path instanceof RegExp) {
-	    return regexpToRegexp(path, keys, options)
+	    return regexpToRegexp(path, /** @type {!Array} */ (keys))
 	  }
 
 	  if (isarray(path)) {
-	    return arrayToRegexp(path, keys, options)
+	    return arrayToRegexp(/** @type {!Array} */ (path), /** @type {!Array} */ (keys), options)
 	  }
 
-	  return stringToRegexp(path, keys, options)
+	  return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
 	}
 
 
 /***/ },
-/* 11 */
+/* 6 */
+/***/ function(module, exports) {
+
+	module.exports = Array.isArray || function (arr) {
+	  return Object.prototype.toString.call(arr) == '[object Array]';
+	};
+
+
+/***/ },
+/* 7 */
 /***/ function(module, exports) {
 
 	function E () {
@@ -1481,34 +1390,14 @@
 
 
 /***/ },
-/* 12 */
-/***/ function(module, exports) {
-
-	
-	exports = module.exports = trim;
-
-	function trim(str){
-	  return str.replace(/^\s*|\s*$/g, '');
-	}
-
-	exports.left = function(str){
-	  return str.replace(/^\s*/, '');
-	};
-
-	exports.right = function(str){
-	  return str.replace(/\s*$/, '');
-	};
-
-
-/***/ },
-/* 13 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var window = __webpack_require__(5)
-	var once = __webpack_require__(8)
+	var window = __webpack_require__(9)
+	var once = __webpack_require__(10)
 	var isFunction = __webpack_require__(1)
-	var parseHeaders = __webpack_require__(9)
+	var parseHeaders = __webpack_require__(13)
 	var xtend = __webpack_require__(14)
 
 	module.exports = createXHR
@@ -1724,6 +1613,155 @@
 
 	function noop() {}
 
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {if (typeof window !== "undefined") {
+	    module.exports = window;
+	} else if (typeof global !== "undefined") {
+	    module.exports = global;
+	} else if (typeof self !== "undefined"){
+	    module.exports = self;
+	} else {
+	    module.exports = {};
+	}
+
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	module.exports = once
+
+	once.proto = once(function () {
+	  Object.defineProperty(Function.prototype, 'once', {
+	    value: function () {
+	      return once(this)
+	    },
+	    configurable: true
+	  })
+	})
+
+	function once (fn) {
+	  var called = false
+	  return function () {
+	    if (called) return
+	    called = true
+	    return fn.apply(this, arguments)
+	  }
+	}
+
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isFunction = __webpack_require__(1)
+
+	module.exports = forEach
+
+	var toString = Object.prototype.toString
+	var hasOwnProperty = Object.prototype.hasOwnProperty
+
+	function forEach(list, iterator, context) {
+	    if (!isFunction(iterator)) {
+	        throw new TypeError('iterator must be a function')
+	    }
+
+	    if (arguments.length < 3) {
+	        context = this
+	    }
+	    
+	    if (toString.call(list) === '[object Array]')
+	        forEachArray(list, iterator, context)
+	    else if (typeof list === 'string')
+	        forEachString(list, iterator, context)
+	    else
+	        forEachObject(list, iterator, context)
+	}
+
+	function forEachArray(array, iterator, context) {
+	    for (var i = 0, len = array.length; i < len; i++) {
+	        if (hasOwnProperty.call(array, i)) {
+	            iterator.call(context, array[i], i, array)
+	        }
+	    }
+	}
+
+	function forEachString(string, iterator, context) {
+	    for (var i = 0, len = string.length; i < len; i++) {
+	        // no such thing as a sparse string.
+	        iterator.call(context, string.charAt(i), i, string)
+	    }
+	}
+
+	function forEachObject(object, iterator, context) {
+	    for (var k in object) {
+	        if (hasOwnProperty.call(object, k)) {
+	            iterator.call(context, object[k], k, object)
+	        }
+	    }
+	}
+
+
+/***/ },
+/* 12 */
+/***/ function(module, exports) {
+
+	
+	exports = module.exports = trim;
+
+	function trim(str){
+	  return str.replace(/^\s*|\s*$/g, '');
+	}
+
+	exports.left = function(str){
+	  return str.replace(/^\s*/, '');
+	};
+
+	exports.right = function(str){
+	  return str.replace(/\s*$/, '');
+	};
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var trim = __webpack_require__(12)
+	  , forEach = __webpack_require__(11)
+	  , isArray = function(arg) {
+	      return Object.prototype.toString.call(arg) === '[object Array]';
+	    }
+
+	module.exports = function (headers) {
+	  if (!headers)
+	    return {}
+
+	  var result = {}
+
+	  forEach(
+	      trim(headers).split('\n')
+	    , function (row) {
+	        var index = row.indexOf(':')
+	          , key = trim(row.slice(0, index)).toLowerCase()
+	          , value = trim(row.slice(index + 1))
+
+	        if (typeof(result[key]) === 'undefined') {
+	          result[key] = value
+	        } else if (isArray(result[key])) {
+	          result[key].push(value)
+	        } else {
+	          result[key] = [ result[key], value ]
+	        }
+	      }
+	  )
+
+	  return result
+	}
 
 /***/ },
 /* 14 */

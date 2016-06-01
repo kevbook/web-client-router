@@ -285,7 +285,9 @@ Router.go = function(url, Opts) {
 
   // Lets check for an edge case:
   // Root and first time, and there is no root
-  if (opts.root && Opts._firstTime &&
+  if (opts.ignoreRootMatch !== true &&
+      opts.root &&
+      Opts._firstTime &&
       opts.rootReg.test(Opts.fullUrl) === false) {
      Router.notFound(url, 'Root did not match.');
   }
